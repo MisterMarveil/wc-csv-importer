@@ -7,6 +7,7 @@ class WC_CSV_Importer {
     public function __construct() {
         add_action('admin_menu', [$this, 'add_import_page']);
         add_action('admin_post_wc_csv_import', [$this, 'process_csv_import']);
+        add_action('admin_post_wc_csv_reset', [$this, 'reset_woocommerce_data']);
     }
 
     public function add_import_page() {
@@ -20,7 +21,15 @@ class WC_CSV_Importer {
         echo '<label for="csv_url">URL du fichier CSV :</label> ';
         echo '<input type="text" name="csv_url" id="csv_url" required style="width: 100%; max-width: 600px;" />';
         echo '<br><br><input type="submit" name="import_csv" value="Importer" class="button button-primary" />';
-        echo '</form></div>';
+        echo '</form>';
+        
+        // Ajouter le bouton de réinitialisation
+        echo '<form method="post" action="'.admin_url('admin-post.php').'" style="margin-top: 20px;">';
+        echo '<input type="hidden" name="action" value="wc_csv_reset">';
+        echo '<input type="submit" name="reset_db" value="Vider la base de données" class="button button-secondary" onclick="return confirm(\'Êtes-vous sûr de vouloir supprimer tous les produits et leurs données associées ? Cette action est irréversible.\')" />';
+        echo '</form>';
+        
+        echo '</div>';
     }
 
     public function process_csv_import() {
@@ -56,6 +65,32 @@ class WC_CSV_Importer {
         unlink($csv_file); // Supprime le fichier après traitement
 
         wp_redirect(admin_url('admin.php?page=wc_csv_importer&import_success=1'));
+        exit;
+    }
+
+    public function reset_woocommerce_data() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Vous n’avez pas la permission d’effectuer cette action.'));
+        }
+
+        global $wpdb;
+        
+        // Supprimer tous les produits et leurs métadonnées
+        $wpdb->query("DELETE FROM {$wpdb->posts} WHERE post_type IN ('product', 'product_variation')");
+        $wpdb->query("DELETE FROM {$wpdb->postmeta} WHERE post_id NOT IN (SELECT ID FROM {$wpdb->posts})");
+        
+        // Supprimer les termes liés aux produits (catégories, tags...)
+        $wpdb->query("DELETE FROM {$wpdb->term_relationships} WHERE object_id NOT IN (SELECT ID FROM {$wpdb->posts})");
+        $wpdb->query("DELETE FROM {$wpdb->term_taxonomy} WHERE term_id NOT IN (SELECT term_id FROM {$wpdb->terms})");
+        $wpdb->query("DELETE FROM {$wpdb->terms} WHERE term_id NOT IN (SELECT term_id FROM {$wpdb->term_taxonomy})");
+        
+        // Supprimer toutes les images associées aux produits
+        $attachments = get_posts([ 'post_type' => 'attachment', 'numberposts' => -1 ]);
+        foreach ($attachments as $attachment) {
+            wp_delete_attachment($attachment->ID, true);
+        }
+        
+        wp_redirect(admin_url('admin.php?page=wc_csv_importer&reset_success=1'));
         exit;
     }
 }
