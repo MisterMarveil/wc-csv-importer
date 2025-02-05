@@ -33,11 +33,21 @@ class WC_CSV_Importer {
         }
 
         $csv_url = esc_url_raw($_POST['csv_url']);
-        $csv_file = download_url($csv_url);
+        $csv_file = wp_tempnam($csv_url);
 
-        if (is_wp_error($csv_file)) {
-            $error_message = $csv_file->get_error_message();
+        $response = wp_remote_get($csv_url, array(
+            'timeout'  => 30,
+            'stream'   => true,
+            'filename' => $csv_file
+        ));
+
+        if (is_wp_error($response)) {
+            $error_message = $response->get_error_message();
             wp_die(__('Erreur lors du téléchargement du fichier CSV : ' . $error_message));
+        }
+
+        if (wp_remote_retrieve_response_code($response) !== 200) {
+            wp_die(__('Erreur HTTP lors du téléchargement du fichier CSV : ' . wp_remote_retrieve_response_message($response)));
         }
 
         $handler = new WC_CSV_Product_Handler();
