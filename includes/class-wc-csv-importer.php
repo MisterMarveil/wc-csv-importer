@@ -36,7 +36,8 @@ class WC_CSV_Importer {
         $csv_file = download_url($csv_url);
 
         if (is_wp_error($csv_file)) {
-            wp_die(__('Erreur lors du téléchargement du fichier CSV.'));
+            $error_message = $csv_file->get_error_message();
+            wp_die(__('Erreur lors du téléchargement du fichier CSV : ' . $error_message));
         }
 
         $handler = new WC_CSV_Product_Handler();
