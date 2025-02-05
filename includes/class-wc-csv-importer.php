@@ -1,47 +1,41 @@
  
 <?php
 
+// Définition des classes
 class WC_CSV_Importer {
     public function __construct() {
-        add_action('admin_menu', array($this, 'add_admin_menu'));
-        add_action('admin_init', array($this, 'handle_csv_import'));
+        add_action('admin_menu', [$this, 'add_import_page']);
+        add_action('admin_post_wc_csv_import', [$this, 'process_csv_import']);
     }
 
-    public function add_admin_menu() {
-        add_menu_page('CSV Importer', 'CSV Importer', 'manage_options', 'csv-importer', array($this, 'import_page'));
+    public function add_import_page() {
+        add_menu_page('Import CSV', 'Import CSV', 'manage_options', 'wc_csv_importer', [$this, 'render_import_page']);
     }
 
-    public function import_page() {
-        include(plugin_dir_path(__FILE__) . '../templates/import-page.php');
+    public function render_import_page() {
+        echo '<div class="wrap"><h1>Importation CSV WooCommerce</h1>';
+        echo '<form method="post" action="'.admin_url('admin-post.php').'" enctype="multipart/form-data">';
+        echo '<input type="hidden" name="action" value="wc_csv_import">';
+        echo '<input type="file" name="csv_file" required />';
+        echo '<input type="submit" name="import_csv" value="Importer" class="button button-primary" />';
+        echo '</form></div>';
     }
 
-    public function handle_csv_import() {
-        if (isset($_POST['import_csv'])) {
-            $csv_url = sanitize_text_field($_POST['csv_url']);
-            $this->import_csv($csv_url);
-        }
-    }
-
-    public function import_csv($url) {
-        // Récupérer le contenu du fichier CSV
-        $response = wp_remote_get($url);
-        if (is_wp_error($response)) {
-            return; // Gérer l'erreur
+    public function process_csv_import() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Vous n’avez pas la permission d’effectuer cette action.'));
         }
 
-        $csv_data = wp_remote_retrieve_body($response);
-        $lines = explode("\n", $csv_data);
-        $header = str_getcsv(array_shift($lines)); // Obtenir l'en-tête
-
-        foreach ($lines as $line) {
-            if (empty($line)) continue; // Ignorer les lignes vides
-            $data = str_getcsv($line);
-            $product_data = array_combine($header, $data);
-
-
-
-            $this->create_category($product_data);
-            $this->create_product($product_data);
+        if (!isset($_FILES['csv_file']) || empty($_FILES['csv_file']['tmp_name'])) {
+            wp_die(__('Aucun fichier n’a été téléchargé.'));
         }
+
+        set_time_limit(0);
+        $csv_file = $_FILES['csv_file']['tmp_name'];
+        $handler = new WC_CSV_Product_Handler();
+        $handler->import_products($csv_file);
+
+        wp_redirect(admin_url('admin.php?page=wc_csv_importer&import_success=1'));
+        exit;
     }
 }
