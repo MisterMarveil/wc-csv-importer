@@ -25,6 +25,12 @@ class WC_CSV_Product_Handler {
         $product->set_description($data['description']);
         $product->set_regular_price($data['price']);
 
+        // Créer et assigner les catégories
+        if (!empty($data['main_category'])) {
+            $category_ids = $this->create_and_assign_categories($data['main_category']);
+            $product->set_category_ids($category_ids);
+        }
+
         // Télécharger et ajouter l'image principale
         if (!empty($data['main_image_url'])) {
             $this->set_product_image($product, $data['main_image_url']);
@@ -36,6 +42,23 @@ class WC_CSV_Product_Handler {
         }
 
         $product->save();
+    }
+
+    private function create_and_assign_categories($category_string) {
+        $categories = explode('|', $category_string);
+        $parent_id = 0;
+        $category_ids = [];
+
+        foreach ($categories as $category_name) {
+            $term = term_exists($category_name, 'product_cat', $parent_id);
+            if (!$term) {
+                $term = wp_insert_term($category_name, 'product_cat', ['parent' => $parent_id]);
+            }
+            $parent_id = $term['term_id'];
+            $category_ids[] = $parent_id;
+        }
+
+        return $category_ids;
     }
 
     private function set_product_image($product, $image_url) {
