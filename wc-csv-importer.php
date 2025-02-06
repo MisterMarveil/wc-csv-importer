@@ -76,6 +76,6 @@ function wc_csv_cron_import() {
     unlink($csv_file);
 
     $end = new \DateTime();
-    echo 'Import completed successfully in ';
+    echo 'Import completed successfully in '.($end->getTimestamp() - $start->getTimestamp()).'seconds';
     exit;
 }
