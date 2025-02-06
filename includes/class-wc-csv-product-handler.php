@@ -8,7 +8,13 @@ class WC_CSV_Product_Handler {
 
         $insertionCount = 0;
         $updateCount = 0;
+        $badCount = 0;
         foreach ($csv_data as $row) {
+            if(count($header) != count($row)){
+                $badCount++;
+                continue;
+            }
+
             $product_data = array_combine($header, $row);
             $sku = $product_data['sku'];
             $last_modification = strtotime($product_data['date_of_last_modification']);
@@ -33,6 +39,7 @@ class WC_CSV_Product_Handler {
         update_option(INSERTION_COUNT_OPTION, $insertionCount);
         update_option(UPDATE_COUNT_OPTION, $updateCount);
         update_option(LAST_CRON_TIME_OPTION, $now->getTimestamp());
+        update_option(INVALID_ENTITY_COUNT_OPTION, $badCount);
     }
 
     private function import_product($data, $update = false, $product_id = false) {

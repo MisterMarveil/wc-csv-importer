@@ -16,6 +16,7 @@ define('TIME_TO_CHECK', 3600);
 define('INSERTION_COUNT_OPTION', 'wc_csv_import_last_insert_count');
 define('UPDATE_COUNT_OPTION', 'wc_csv_import_last_update_count');
 define('LAST_CRON_TIME_OPTION', 'wc_csv_import_last_cron_timestamp');
+define('INVALID_ENTITY_COUNT_OPTION', 'wc_csv_import_last_bad_entity');
 
 // Inclure les classes nécessaires
 include_once plugin_dir_path(__FILE__) . 'includes/class-wc-csv-importer.php';

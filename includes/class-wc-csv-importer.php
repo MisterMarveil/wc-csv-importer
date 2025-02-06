@@ -18,13 +18,14 @@ class WC_CSV_Importer {
     public function render_import_page() {        
         $insCount = get_option(INSERTION_COUNT_OPTION, 0);
         $upCount = get_option(UPDATE_COUNT_OPTION, 0);
+        $badCount = get_option(INVALID_ENTITY_COUNT_OPTION, 0);
 
         $lastTime = get_option(LAST_CRON_TIME_OPTION, 0);
         $dateStr = "";
         if($lastTime){
             $now = new \DateTime();
             $now->setTimestamp($lastTime);
-            $dateStr = '<div class="notice notice-success is-dismissible"><p>Dernier import csv - ' . $now->format("Y-m-d H:i:s"). "$insCount nouveau(x) produit(s) | $upCount produit(s) mis à jour</p></div>";
+            $dateStr = '<div class="notice notice-success is-dismissible"><p>Dernier import csv - ' . $now->format("Y-m-d H:i:s"). "$insCount nouveau(x) produit(s) | $upCount produit(s) mis à jour | $badCount lignes incohérentes détectées</p></div>";
         }
 
         $saved_csv_url = get_option('wc_csv_import_url', '');
@@ -75,8 +76,7 @@ class WC_CSV_Importer {
                 wp_die(__('Aucune URL de fichier CSV spécifiée.'));
         }else{
             $csv_url = esc_url_raw($_POST['csv_url']);
-            update_option('wc_csv_import_url', esc_url_raw($csv_url));
-        
+            update_option('wc_csv_import_url', esc_url_raw($csv_url));        
         }
 
         $csv_file = wp_tempnam($csv_url);
