@@ -36,16 +36,16 @@ class WC_CSV_Importer {
         echo '<br><br><input type="submit" name="save_csv_url" value="Sauvegarder l\'URL" class="button button-secondary" />';
         echo '</form>';
 
-        // Afficher le formulaire d'importation
-        echo '<form method="post" action="'.admin_url('admin-post.php').'" style="margin-top: 20px;">';
-        echo '<input type="hidden" name="action" value="wc_csv_import">';
-        echo '<input type="submit" name="import_csv" value="Importer" class="button button-primary" />';
-        echo '</form>';
-        
         // Ajouter le bouton de réinitialisation
-        echo '<form method="post" action="'.admin_url('admin-post.php').'" style="margin-top: 20px;">';
+        echo '<form method="post" action="'.admin_url('admin-post.php').'" style="display: inline-block; margin-right: 10px;">';
         echo '<input type="hidden" name="action" value="wc_csv_reset">';
         echo '<input type="submit" name="reset_db" value="Vider la base de données" class="button button-secondary" onclick="return confirm(\'Êtes-vous sûr de vouloir supprimer tous les produits et leurs données associées ? Cette action est irréversible.\')" />';
+        echo '</form>';
+
+        // Afficher le formulaire d'importation
+        echo '<form method="post" action="'.admin_url('admin-post.php').'" style="display: inline-block; margin-right: 10px;">';
+        echo '<input type="hidden" name="action" value="wc_csv_import">';
+        echo '<input type="submit" name="import_csv" value="Importer" class="button button-primary" />';
         echo '</form>';
         
         echo '</div>';
