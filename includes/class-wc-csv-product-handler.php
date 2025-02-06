@@ -6,6 +6,8 @@ class WC_CSV_Product_Handler {
         $csv_data = array_map('str_getcsv', file($file_path));
         $header = array_shift($csv_data);
 
+        $insertionCount = 0;
+        $updateCount = 0;
         foreach ($csv_data as $row) {
             $product_data = array_combine($header, $row);
             $sku = $product_data['sku'];
@@ -18,12 +20,19 @@ class WC_CSV_Product_Handler {
             if ($product_id) {
                 // Vérifier si la modification est récente
                 if (($current_time - $last_modification) <= TIME_TO_CHECK) {
-                    $this->import_product($product_data, true, $product_id);                    
+                    $this->import_product($product_data, true, $product_id);   
+                    $updateCount++;                 
                 }
             } else {
                 $this->import_product($product_data);
+                $insertionCount++;
             }
         }
+
+        $now = new \DateTime();
+        update_option(INSERTION_COUNT_OPTION, $insertionCount);
+        update_option(UPDATE_COUNT_OPTION, $updateCount);
+        update_option(LAST_CRON_TIME_OPTION, $now->getTimestamp());
     }
 
     private function import_product($data, $update = false, $product_id = false) {

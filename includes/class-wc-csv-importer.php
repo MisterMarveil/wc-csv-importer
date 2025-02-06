@@ -15,10 +15,23 @@ class WC_CSV_Importer {
         add_menu_page('Import CSV', 'Import CSV', 'manage_options', 'wc_csv_importer', [$this, 'render_import_page']);
     }
 
-    public function render_import_page() {
+    public function render_import_page() {        
+        $insCount = get_option(INSERTION_COUNT_OPTION, 0);
+        $upCount = get_option(UPDATE_COUNT_OPTION, 0);
+
+        $lastTime = get_option(LAST_CRON_TIME_OPTION, 0);
+        $dateStr = "";
+        if($lastTime){
+            $now = new \DateTime();
+            $now->setTimestamp($lastTime);
+            $dateStr = '<div class="notice notice-success is-dismissible"><p>Dernier import csv - ' . $now->format("Y-m-d H:i:s"). "$insCount nouveau(x) produit(s) | $upCount produit(s) mis à jour</p></div>";
+        }
+
         $saved_csv_url = get_option('wc_csv_import_url', '');
+
         echo '<div class="wrap"><h1>Importation CSV WooCommerce</h1>';
         echo '<div class="help-block">';
+        echo $dateStr;
         if(isset($_GET['import_success']) && $_GET['import_success']) {
             echo '<div class="notice notice-success is-dismissible"><p>Importation réussie.</p></div>';
         }else if(isset($_GET['reset_success']) && $_GET['reset_success']) {
@@ -29,7 +42,7 @@ class WC_CSV_Importer {
         echo '</div>';
 
         // Afficher le formulaire de sauvegarde de l'URL du CSV
-        echo '<form method="post" action="'.admin_url('admin-post.php').'">';
+        echo '<form method="post" action="'.admin_url('admin-post.php').'" style="display: inline-block; margin-right: 10px;">';
         echo '<input type="hidden" name="action" value="wc_csv_save_url">';
         echo '<label for="csv_url">URL du fichier CSV :</label> ';
         echo '<input type="text" name="csv_url" id="csv_url" value="' . esc_url($saved_csv_url) . '" required style="width: 100%; max-width: 600px;" />';
