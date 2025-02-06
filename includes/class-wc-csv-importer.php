@@ -15,11 +15,24 @@ class WC_CSV_Importer {
     }
 
     public function render_import_page() {
+        
+        echo '<form method="post" action="'.admin_url('admin-post.php').'" style="margin-top: 20px;">';
+        echo '<input type="hidden" name="action" value="wc_csv_import">';
+        echo '<input type="submit" name="import_csv" value="Importer" class="button button-primary" />';
+        echo '</form>';
+        
+        echo '</div>';
+    }
+
+    public function render_import_page() {
+        $saved_csv_url = get_option('wc_csv_import_url', '');
         echo '<div class="wrap"><h1>Importation CSV WooCommerce</h1>';
+
+        // Afficher le formulaire d'importation
         echo '<form method="post" action="'.admin_url('admin-post.php').'">';
         echo '<input type="hidden" name="action" value="wc_csv_import">';
         echo '<label for="csv_url">URL du fichier CSV :</label> ';
-        echo '<input type="text" name="csv_url" id="csv_url" required style="width: 100%; max-width: 600px;" />';
+        echo '<input type="text" name="csv_url" id="csv_url" value="' . esc_url($saved_csv_url) . '" required style="width: 100%; max-width: 600px;" />';
         echo '<br><br><input type="submit" name="import_csv" value="Importer" class="button button-primary" />';
         echo '</form>';
         
@@ -58,6 +71,9 @@ class WC_CSV_Importer {
         if (wp_remote_retrieve_response_code($response) !== 200) {
             wp_die(__('Erreur HTTP lors du téléchargement du fichier CSV : ' . wp_remote_retrieve_response_message($response)));
         }
+
+        update_option('wc_csv_import_url', esc_url_raw($csv_url));
+        
 
         $handler = new WC_CSV_Product_Handler();
         $handler->import_products($csv_file);
