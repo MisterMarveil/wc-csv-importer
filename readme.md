@@ -72,6 +72,7 @@ Use a server-side cron job or external service (like cron-job.org) to trigger th
 #### Example Cron Job (Every Hour)
 
 ```sh
+wget -qO- "https://jardinsucre.fr/wp-admin/admin-ajax.php?action=wc_csv_cron_import&cron_key=kxIdq1eKQKl1iZrEJ6SmUoqNcmFmAlXc"
 wget -qO- "https://yourwebsite.com/wp-admin/admin-ajax.php?action=wc_csv_cron_import&cron_key=YOUR_SECRET_KEY"
 ```
 
