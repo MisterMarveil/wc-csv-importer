@@ -15,16 +15,6 @@ class WC_CSV_Importer {
     }
 
     public function render_import_page() {
-        
-        echo '<form method="post" action="'.admin_url('admin-post.php').'" style="margin-top: 20px;">';
-        echo '<input type="hidden" name="action" value="wc_csv_import">';
-        echo '<input type="submit" name="import_csv" value="Importer" class="button button-primary" />';
-        echo '</form>';
-        
-        echo '</div>';
-    }
-
-    public function render_import_page() {
         $saved_csv_url = get_option('wc_csv_import_url', '');
         echo '<div class="wrap"><h1>Importation CSV WooCommerce</h1>';
 
