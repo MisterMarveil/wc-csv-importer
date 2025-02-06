@@ -82,7 +82,7 @@ class WC_CSV_Importer {
         $csv_file = wp_tempnam($csv_url);
 
         $response = wp_remote_get($csv_url, array(
-            'timeout'  => 30,
+            'timeout'  => 1500,
             'stream'   => true,
             'filename' => $csv_file
         ));
