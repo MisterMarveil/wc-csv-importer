@@ -8,6 +8,7 @@ class WC_CSV_Importer {
         add_action('admin_menu', [$this, 'add_import_page']);
         add_action('admin_post_wc_csv_import', [$this, 'process_csv_import']);
         add_action('admin_post_wc_csv_reset', [$this, 'reset_woocommerce_data']);
+        add_action('admin_post_wc_csv_save_url', [$this, 'wc_csv_save_url']);
     }
 
     public function add_import_page() {
@@ -17,13 +18,28 @@ class WC_CSV_Importer {
     public function render_import_page() {
         $saved_csv_url = get_option('wc_csv_import_url', '');
         echo '<div class="wrap"><h1>Importation CSV WooCommerce</h1>';
+        echo '<div class="help-block">';
+        if(isset($_GET['import_success']) && $_GET['import_success']) {
+            echo '<div class="notice notice-success is-dismissible"><p>Importation réussie.</p></div>';
+        }else if(isset($_GET['reset_success']) && $_GET['reset_success']) {
+            echo '<div class="notice notice-success is-dismissible"><p>Données réinitialisées.</p></div>';
+        }else if(isset($_GET['url_saved']) && $_GET['url_saved']) {
+            echo '<div class="notice notice-success is-dismissible"><p>URL sauvegardée.</p></div>';
+        }
+        echo '</div>';
 
-        // Afficher le formulaire d'importation
+        // Afficher le formulaire de sauvegarde de l'URL du CSV
         echo '<form method="post" action="'.admin_url('admin-post.php').'">';
-        echo '<input type="hidden" name="action" value="wc_csv_import">';
+        echo '<input type="hidden" name="action" value="wc_csv_save_url">';
         echo '<label for="csv_url">URL du fichier CSV :</label> ';
         echo '<input type="text" name="csv_url" id="csv_url" value="' . esc_url($saved_csv_url) . '" required style="width: 100%; max-width: 600px;" />';
-        echo '<br><br><input type="submit" name="import_csv" value="Importer" class="button button-primary" />';
+        echo '<br><br><input type="submit" name="save_csv_url" value="Sauvegarder l\'URL" class="button button-secondary" />';
+        echo '</form>';
+
+        // Afficher le formulaire d'importation
+        echo '<form method="post" action="'.admin_url('admin-post.php').'" style="margin-top: 20px;">';
+        echo '<input type="hidden" name="action" value="wc_csv_import">';
+        echo '<input type="submit" name="import_csv" value="Importer" class="button button-primary" />';
         echo '</form>';
         
         // Ajouter le bouton de réinitialisation
@@ -41,10 +57,15 @@ class WC_CSV_Importer {
         }
 
         if (!isset($_POST['csv_url']) || empty($_POST['csv_url'])) {
-            wp_die(__('Aucune URL de fichier CSV spécifiée.'));
+            $csv_url = get_option('wc_csv_import_url', '');
+            if(empty($csv_url))
+                wp_die(__('Aucune URL de fichier CSV spécifiée.'));
+        }else{
+            $csv_url = esc_url_raw($_POST['csv_url']);
+            update_option('wc_csv_import_url', esc_url_raw($csv_url));
+        
         }
 
-        $csv_url = esc_url_raw($_POST['csv_url']);
         $csv_file = wp_tempnam($csv_url);
 
         $response = wp_remote_get($csv_url, array(
@@ -62,15 +83,26 @@ class WC_CSV_Importer {
             wp_die(__('Erreur HTTP lors du téléchargement du fichier CSV : ' . wp_remote_retrieve_response_message($response)));
         }
 
-        update_option('wc_csv_import_url', esc_url_raw($csv_url));
-        
-
         $handler = new WC_CSV_Product_Handler();
         $handler->import_products($csv_file);
 
         unlink($csv_file); // Supprime le fichier après traitement
 
         wp_redirect(admin_url('admin.php?page=wc_csv_importer&import_success=1'));
+        exit;
+    }
+
+    function wc_csv_save_url() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Vous n’avez pas la permission d’effectuer cette action.'));
+        }
+    
+        if (!isset($_POST['csv_url']) || empty($_POST['csv_url'])) {
+            wp_die(__('Aucune URL de fichier CSV spécifiée.'));
+        }
+    
+        update_option('wc_csv_import_url', esc_url_raw($_POST['csv_url']));
+        wp_redirect(admin_url('admin.php?page=wc_csv_importer&url_saved=1'));
         exit;
     }
 

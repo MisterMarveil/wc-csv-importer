@@ -46,6 +46,7 @@ add_action('wp_ajax_nopriv_wc_csv_cron_import', 'wc_csv_cron_import');
 add_action('wp_ajax_wc_csv_cron_import', 'wc_csv_cron_import');
 
 function wc_csv_cron_import() {
+    $start = new \DateTime();
     if (!isset($_GET['cron_key']) || $_GET['cron_key'] !== get_option('wc_csv_cron_secret_key')) {
         wp_die('Unauthorized', 401);
     }
@@ -74,6 +75,7 @@ function wc_csv_cron_import() {
     $handler->import_products($csv_file);
     unlink($csv_file);
 
-    echo 'Import completed successfully';
+    $end = new \DateTime();
+    echo 'Import completed successfully in ';
     exit;
 }
