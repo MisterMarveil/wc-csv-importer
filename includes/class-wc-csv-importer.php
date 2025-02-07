@@ -10,6 +10,20 @@ class WC_CSV_Importer {
         add_action('wp_ajax_process_import_batch', [$this, 'process_csv_import']);
         add_action('admin_post_wc_csv_reset', [$this, 'reset_woocommerce_data']);
         add_action('admin_post_wc_csv_save_url', [$this, 'wc_csv_save_url']);
+        add_action( 'admin_enqueue_scripts', [$this, 'wc_importer_scripts']);
+    }
+
+    public function wc_importer_scripts() {
+        wp_register_style('percircle_style', plugins_url( 'wc-csv-importer/assets/percircle/percircle.css'));
+        wp_enqueue_style('percircle_style');
+        
+        wp_register_script( 'percircle-script', plugins_url( 'wc-csv-importer/assets/percircle/percircle.js'), array ('jquery')  );
+        wp_enqueue_script( 'percircle-script' );
+
+
+        wp_register_script( 'ajax-importer-script', plugins_url( 'wc-csv-importer/assets/js/importer_script.js'), array ('percircle-script')  );
+        wp_enqueue_script( 'ajax-importer-script' );
+    }
        
     }   
    
@@ -74,9 +88,9 @@ class WC_CSV_Importer {
     }
 
     public function initialize_import() {
-        return "good to go";
-        
-        if (!isset($_POST['csv_url']) || empty($_POST['csv_url'])) {
+        return array("good to go");
+
+        /*if (!isset($_POST['csv_url']) || empty($_POST['csv_url'])) {
             $csv_url = get_option('wc_csv_import_url', '');
             if(empty($csv_url))
                 wp_die(__('Aucune URL de fichier CSV spécifiée.'));
@@ -115,12 +129,12 @@ class WC_CSV_Importer {
         return [
             'file_path' => $csv_file,
             'total_rows' => $total_rows,
-        ];
+        ];*/
     }
 
 
     public function process_csv_import($file_path, $offset, $insert_count, $update_count) {
-        if (!current_user_can('manage_options')) {
+        /*if (!current_user_can('manage_options')) {
             wp_die(__('Vous n’avez pas la permission d’effectuer cette action.'));
         }
 
@@ -152,7 +166,7 @@ class WC_CSV_Importer {
             'total_rows' => count($rows),
             'insert_count' => $insert_count,
             'update_count' => $update_count,
-        ];
+        ];*/
     }
 
     function wc_csv_save_url() {
