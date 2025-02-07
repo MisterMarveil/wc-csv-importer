@@ -87,10 +87,7 @@ class WC_CSV_Importer {
         echo '</div>';
     }
 
-    public function initialize_csv_import($csv_url) {
-        wp_send_json(array("message" => "good to go", "url" => $csv_url));
-        wp_die();
-
+    public function initialize_csv_import() {        
         if (!isset($_POST['csv_url']) || empty($_POST['csv_url'])) {
             $csv_url = get_option('wc_csv_import_url', '');
             if(empty($csv_url))
@@ -101,6 +98,9 @@ class WC_CSV_Importer {
         }
 
         $csv_file = wp_tempnam($csv_url);
+        wp_send_json(array("message" => "good to go", "url" => $csv_url));
+        wp_die();
+
         $response = wp_remote_get($csv_url, array(
             'timeout'  => 30,
             'stream'   => true,
@@ -114,9 +114,6 @@ class WC_CSV_Importer {
         if (wp_remote_retrieve_response_code($response) !== 200) {
             return ['error' => 'HTTP error: ' . wp_remote_retrieve_response_message($response)];
         }
-
-        wp_json_send(array("success" => true));
-        wp_die();
 
         $fileContentArray = file($csv_file);
         $separators = array();
