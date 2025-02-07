@@ -98,8 +98,8 @@ class WC_CSV_Importer {
         }
 
         $csv_file = wp_tempnam($csv_url);
-        wp_send_json(array("message" => "good to go", "url" => $csv_url));
-        wp_die();
+        return array("message" => "good to go", "url" => $csv_url);
+        //wp_die();
 
         $response = wp_remote_get($csv_url, array(
             'timeout'  => 30,
