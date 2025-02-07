@@ -2,26 +2,18 @@
 <?php
 
 class WC_CSV_Product_Handler {
-    public function import_products($file_path) {
-        $fileContentArray = file($file_path);
-        $separators = array();
-        for($i = 0; $i < count($fileContentArray); $i++) {
-            $separators[] = ";";
-        }
-
-        $csv_data = array_map('str_getcsv', $fileContentArray, $separators);
-        $header = array_shift($csv_data);
-
+    public function import_products($batch, $header) {
+       
         $insertionCount = 0;
         $updateCount = 0;
         $badCount = 0;
-        foreach ($csv_data as $row) {
+        foreach ($batch as $row) {
             if(count($header) != count($row)){
                 var_dump($header);
                 echo nl2br("\n--------------------------------\n");
                 var_dump($row);
                 $badCount++;
-                if($badCount == 5){
+                if($badCount == 2){
                     wp_die("bad count: " . $badCount);
                 }
                 continue;
@@ -47,11 +39,7 @@ class WC_CSV_Product_Handler {
             }
         }
 
-        $now = new \DateTime();
-        update_option(INSERTION_COUNT_OPTION, $insertionCount);
-        update_option(UPDATE_COUNT_OPTION, $updateCount);
-        update_option(LAST_CRON_TIME_OPTION, $now->getTimestamp());
-        update_option(INVALID_ENTITY_COUNT_OPTION, $badCount);
+        return ["insert_count" => $insertionCount, "update_count" => $updateCount];
     }
 
     private function import_product($data, $update = false, $product_id = false) {
