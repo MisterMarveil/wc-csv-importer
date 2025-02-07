@@ -88,7 +88,8 @@ class WC_CSV_Importer {
     }
 
     public function initialize_csv_import($csv_url) {
-        return array("message" => "good to go", "url" => $csv_url);
+        wp_json_send(array("message" => "good to go", "url" => $csv_url));
+        wp_die();
 
         if (!isset($_POST['csv_url']) || empty($_POST['csv_url'])) {
             $csv_url = get_option('wc_csv_import_url', '');
