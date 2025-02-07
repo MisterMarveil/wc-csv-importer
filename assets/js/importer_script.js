@@ -5,10 +5,11 @@ jQuery(document).ready(function($) {
     let updateCount = 0;
     let offset = 0;
     let batchSize = 5;
-    $("#import-progress").percircle('hidden');
+    $("#import-progress").percircle();
     
     $('#start-import').click(function() {
         $('#import-status').html('<p>Initializing import...</p>');
+        alert(ajaxurl);
         $.ajax({
             url: ajaxurl,
             type: 'POST',
