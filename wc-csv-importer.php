@@ -38,7 +38,7 @@ function wc_importer_scripts() {
     wp_enqueue_script( 'percircle-script' );
 
 
-    wp_register_script( 'ajax-importer-script', plugins_url( 'wc-csv-importer/assets/js/importer_script.js'), array ('jquery')  );
+    wp_register_script( 'ajax-importer-script', plugins_url( 'wc-csv-importer/assets/js/importer_script.js'), array ('percircle-script')  );
     wp_enqueue_script( 'ajax-importer-script' );
 }
  add_action( 'admin_enqueue_scripts', 'wc_importer_scripts');

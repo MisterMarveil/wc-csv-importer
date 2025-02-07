@@ -60,7 +60,7 @@ class WC_CSV_Importer {
         echo '</form>';
 
         // Import Button
-        echo '<button id="start-import" class="button button-primary">Start Import</button>';
+        echo '<button id="start-import" class="button button-primary">* Start Import</button>';
         
         // Progress Bar
         echo '<div style="margin-top: 20px; width: 100%; background-color: #ddd; height: 20px; border-radius: 5px;">';
