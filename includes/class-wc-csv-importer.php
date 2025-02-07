@@ -10,18 +10,18 @@ class WC_CSV_Importer {
         add_action('wp_ajax_process_import_batch', [$this, 'process_csv_import']);
         add_action('admin_post_wc_csv_reset', [$this, 'reset_woocommerce_data']);
         add_action('admin_post_wc_csv_save_url', [$this, 'wc_csv_save_url']);
-        add_action( 'wp_enqueue_scripts', [$this, 'wc_importer_scripts']);
+        add_action( 'admin_enqueue_scripts', [$this, 'wc_importer_scripts']);
     }
 
     public function wc_importer_scripts() {
-        wp_register_style('percicle_style', plugins_url( '../assets/percircle/percircle.css', __FILE__));
+        wp_register_style('percicle_style', plugins_url( 'wc-csv-importer/assets/percircle/percircle.css'));
         wp_enqueue_style('percicle_style');
         
-        wp_register_script( 'percicle-script', plugins_url( '../assets/percircle/percicle.js', __FILE__), array ('jquery')  );
+        wp_register_script( 'percicle-script', plugins_url( 'wc-csv-importer/assets/percircle/percicle.js'), array ('jquery')  );
         wp_enqueue_script( 'percircle-script' );
     
 
-        wp_register_script( 'ajax-importer-script', plugins_url( '../assets/js/importer_script.js', __FILE__), array ('jquery', 'percircle-script')  );
+        wp_register_script( 'ajax-importer-script', plugins_url( 'wc-csv-importer/assets/js/importer_script.js'), array ('jquery', 'percircle-script')  );
         wp_enqueue_script( 'ajax-importer-script' );
     }
    
@@ -82,7 +82,6 @@ class WC_CSV_Importer {
         
         // Import Status
         echo '<div id="import-status" style="margin-top: 10px;"></div>';
-        echo plugins_url( 'wc-csv-importer/assets/js/importer_script.js');
         echo '</div>';        
         echo '</div>';
     }
