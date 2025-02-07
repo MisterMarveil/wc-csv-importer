@@ -115,9 +115,9 @@ class WC_CSV_Importer {
 
        
 
-        //$fileContentArray = file($csv_file);
-        $fileContent = file_get_contents($csv_file);
-         wp_send_json(array("success" => true, "message" => $csv_file, "count" => strlen($fileContent)));
+        $fileContentArray = file($csv_file);
+        //$fileContent = file_get_contents($csv_file);
+         wp_send_json(array("success" => true, "message" => $csv_file, "count" => count($fileContentArray)));
         wp_die;
 
         $separators = array();
