@@ -84,9 +84,6 @@ class WC_CSV_Importer {
         echo '<div id="import-status" style="margin-top: 10px;"></div>';
         echo '</div>';        
         echo '</div>';
-        echo '<script type="text/javascript">';
-        echo ' var ajaxurl = "<?php echo admin_url(\'admin-ajax.php\'); ?>"';
-        echo '</script>';
     }
 
     public function initialize_import() {
