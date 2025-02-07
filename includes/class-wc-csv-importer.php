@@ -23,8 +23,8 @@ class WC_CSV_Importer {
 
         wp_register_script( 'ajax-importer-script', plugins_url( 'wc-csv-importer/assets/js/importer_script.js'), array ('percircle-script')  );
         wp_enqueue_script( 'ajax-importer-script' );
-    }
-       
+    
+    
     }   
    
 
