@@ -78,7 +78,7 @@ class WC_CSV_Importer {
         
         // Progress Bar
         echo '<div style="margin-top: 20px; width: 100%; background-color: #ddd; height: 20px; border-radius: 5px;">';
-        echo '<div id="import-progress" data-percent="0" class="hidden big dark blue">0%</div>';       
+        echo '<div id="import-progress" data-percent="0" class="hidden big blue">0%</div>';       
         echo '</div>';
         
         // Import Status
@@ -113,6 +113,8 @@ class WC_CSV_Importer {
         if (wp_remote_retrieve_response_code($response) !== 200) {
             return ['error' => 'HTTP error: ' . wp_remote_retrieve_response_message($response)];
         }
+
+        return array("success" => true, "message" => "good");
 
         $fileContentArray = file($csv_file);
         $separators = array();
