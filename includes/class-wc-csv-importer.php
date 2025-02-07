@@ -87,8 +87,8 @@ class WC_CSV_Importer {
         echo '</div>';
     }
 
-    public function initialize_csv_import() {
-        //return array("good to go");
+    public function initialize_csv_import($csv_url) {
+        return array("message" => "good to go", "url" => $csv_url);
 
         if (!isset($_POST['csv_url']) || empty($_POST['csv_url'])) {
             $csv_url = get_option('wc_csv_import_url', '');
