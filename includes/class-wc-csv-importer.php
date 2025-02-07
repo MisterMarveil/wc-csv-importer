@@ -148,18 +148,18 @@ class WC_CSV_Importer {
         }
         $file_path = $_POST['file_path'];
         
-        if (!isset($_POST['offset']) || empty($_POST['offset'])) {
-                wp_die(__('Oops! offset non précisé.'));
+        if (!isset($_POST['offset'])) {
+            wp_die(__('Oops! offset non précisé.'));
         }
         $offset = $_POST['offset'];
         
-        if (!isset($_POST['insert_count']) || empty($_POST['insert_count'])) {
-                wp_die(__('Oops! insert_count non précisé.'));
+        if (!isset($_POST['insert_count'])) {
+            wp_die(__('Oops! insert_count non précisé.'));
         }
         $insert_count = $_POST['insert_count'];
         
-        if (!isset($_POST['update_count']) || empty($_POST['update_count'])) {
-                wp_die(__('Oops! update_count non précisé.'));
+        if (!isset($_POST['update_count'])) {
+            wp_die(__('Oops! update_count non précisé.'));
         }
         $update_count = $_POST['update_count'];
 
