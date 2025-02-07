@@ -113,6 +113,9 @@ class WC_CSV_Importer {
             return ['error' => 'HTTP error: ' . wp_remote_retrieve_response_message($response)];
         }
 
+        wp_send_json(array("success" => true, "message" => $csv_file));
+        wp_die;
+        
         $fileContentArray = file($csv_file);
         $separators = array();
         for($i = 0; $i < count($fileContentArray); $i++) {
