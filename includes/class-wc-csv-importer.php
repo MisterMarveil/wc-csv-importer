@@ -138,10 +138,30 @@ class WC_CSV_Importer {
     }
 
 
-    public function process_csv_import($file_path, $offset, $insert_count, $update_count) {
+    public function process_csv_import() {
         if (!current_user_can('manage_options')) {
             wp_die(__('Vous n’avez pas la permission d’effectuer cette action.'));
         }
+
+        if (!isset($_POST['file_path']) || empty($_POST['file_path'])) {
+                wp_die(__('Oops! fichier csv non spécifié.'));
+        }
+        $file_path = $_POST['file_path'];
+        
+        if (!isset($_POST['offset']) || empty($_POST['offset'])) {
+                wp_die(__('Oops! offset non précisé.'));
+        }
+        $offset = $_POST['offset'];
+        
+        if (!isset($_POST['insert_count']) || empty($_POST['insert_count'])) {
+                wp_die(__('Oops! insert_count non précisé.'));
+        }
+        $insert_count = $_POST['insert_count'];
+        
+        if (!isset($_POST['update_count']) || empty($_POST['update_count'])) {
+                wp_die(__('Oops! update_count non précisé.'));
+        }
+        $update_count = $_POST['update_count'];
 
         $file_content = json_decode(file_get_contents($file_path), true);
         $header = $file_content['header'];
@@ -162,16 +182,18 @@ class WC_CSV_Importer {
             update_option(LAST_CRON_TIME_OPTION, $now->getTimestamp());
         
             unlink($file_path); // Delete file when done
-            return ['completed' => true];
+            wp_send_json(['completed' => true]);
+            wp_die();
         }
 
-        return [
+        wp_send_json([
             'completed' => false,
             'next_offset' => $progress,
             'total_rows' => count($rows),
             'insert_count' => $insert_count,
             'update_count' => $update_count,
-        ];
+        ]);
+        wp_die();
     }
 
     function wc_csv_save_url() {
