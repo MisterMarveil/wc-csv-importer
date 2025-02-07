@@ -30,6 +30,19 @@ function wc_csv_importer_init() {
 }
 add_action('plugins_loaded', 'wc_csv_importer_init');
 
+function wc_importer_scripts() {
+    wp_register_style('percicle_style', plugins_url( 'wc-csv-importer/assets/percircle/percircle.css'));
+    wp_enqueue_style('percicle_style');
+    
+    wp_register_script( 'percicle-script', plugins_url( 'wc-csv-importer/assets/percircle/percicle.js'), array ('jquery')  );
+    wp_enqueue_script( 'percircle-script' );
+
+
+    wp_register_script( 'ajax-importer-script', plugins_url( 'wc-csv-importer/assets/js/importer_script.js'), array ('jquery', 'percircle-script')  );
+    wp_enqueue_script( 'ajax-importer-script' );
+}
+ add_action( 'admin_enqueue_scripts', 'wc_importer_scripts');
+
 // Activation du plugin
 function wc_csv_importer_activate() {
     if (!class_exists('WooCommerce')) {
