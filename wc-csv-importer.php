@@ -31,10 +31,10 @@ function wc_csv_importer_init() {
 add_action('plugins_loaded', 'wc_csv_importer_init');
 
 function wc_importer_scripts() {
-    wp_register_style('percicle_style', plugins_url( 'wc-csv-importer/assets/percircle/percircle.css'));
-    wp_enqueue_style('percicle_style');
+    wp_register_style('percircle_style', plugins_url( 'wc-csv-importer/assets/percircle/percircle.css'));
+    wp_enqueue_style('percircle_style');
     
-    wp_register_script( 'percicle-script', plugins_url( 'wc-csv-importer/assets/percircle/percicle.js'), array ('jquery')  );
+    wp_register_script( 'percircle-script', plugins_url( 'wc-csv-importer/assets/percircle/percircle.js'), array ('jquery')  );
     wp_enqueue_script( 'percircle-script' );
 
 
