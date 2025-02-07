@@ -3,7 +3,7 @@
 
 class WC_CSV_Product_Handler {
     public function import_products($file_path) {
-        $csv_data = array_map('str_getcsv', file($file_path));
+        $csv_data = array_map('str_getcsv', file($file_path), ';');
         $header = array_shift($csv_data);
 
         $insertionCount = 0;
@@ -62,7 +62,8 @@ class WC_CSV_Product_Handler {
 
         $product->set_name($data['name']);
         $product->set_sku($data['sku']);
-        $product->set_description($data['description']);
+        $product->set_short_description($data['description']); // Short description
+        $product->set_description($data['html_description']); // Long description
         $product->set_regular_price($data['price']);
         $product->set_manage_stock(true);
         $product->set_stock_quantity($data['available_stock']);
