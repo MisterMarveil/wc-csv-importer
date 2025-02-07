@@ -113,14 +113,16 @@ class WC_CSV_Importer {
             return ['error' => 'HTTP error: ' . wp_remote_retrieve_response_message($response)];
         }
 
-        wp_send_json(array("success" => true, "message" => $csv_file));
-        wp_die;
-        
+       
+
         $fileContentArray = file($csv_file);
         $separators = array();
         for($i = 0; $i < count($fileContentArray); $i++) {
             $separators[] = ";";
         }
+
+         wp_send_json(array("success" => true, "message" => $csv_file, "count" => count($fileContentArray)));
+        wp_die;
 
         $csv_data = array_map('str_getcsv', $fileContentArray, $separators);
         $total_rows = count($csv_data) - 1; // Exclude header row
