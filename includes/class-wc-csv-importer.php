@@ -126,9 +126,9 @@ class WC_CSV_Importer {
         
         $csv_data = array_map('str_getcsv', $fileContentArray, $separators);
         $total_rows = count($csv_data) - 1; // Exclude header row
-        $header = array_shift($csv_data);
+        //$header = array_shift($csv_data);
         
-        file_put_contents($csv_file, json_encode(['header' => $header, 'rows' => $csv_data]));
+        //file_put_contents($csv_file, json_encode(['header' => $header, 'rows' => $csv_data]));
 
         wp_send_json([
             'file_path' => $csv_file,
@@ -143,8 +143,8 @@ class WC_CSV_Importer {
             wp_die(__('Vous n’avez pas la permission d’effectuer cette action.'));
         }
 
-        if (!isset($_POST['file_path']) || empty($_POST['file_path'])) {
-                wp_die(__('Oops! fichier csv non spécifié.'));
+        if (!isset($_POST['file_path']) || !is_file($_POST['file_path'])) {
+                wp_die(__('Oops! fichier csv non spécifié ou inexistant.'));
         }
         $file_path = $_POST['file_path'];
         
@@ -163,20 +163,31 @@ class WC_CSV_Importer {
         }
         $update_count = $_POST['update_count'];
 
-        $file_content = json_decode(file_get_contents($file_path), true);
+       /* $file_content = json_decode(file_get_contents($file_path), true);
         
         $header = explode(',', $file_content['header'][0]);
-        $rows = $file_content['rows'];
-        $batch = array_slice($rows, $offset, BATCH_SIZE);
+        $rows = $file_content['rows'];*/
+        $fileContentArray = file($file_path);        
+        $separators = array();
+        for($i = 0; $i < count($fileContentArray); $i++) {
+            $separators[] = ";";
+        }
+
+        
+        $csv_data = array_map('str_getcsv', $fileContentArray, $separators);
+        $header = array_shift($csv_data);
+
+        $batch = array_slice($csv_data, $offset, BATCH_SIZE);
 
         $handler = new WC_CSV_Product_Handler();
         $result = $handler->import_products($batch, $header);
         $insert_count += $result['insert_count'];
         $update_count += $result['update_count'];
+        $rowCount = count($csv_data);
         
 
-        $progress = min($offset + BATCH_SIZE, count($rows));
-        if ($progress >= count($rows)) {
+        $progress = min($offset + BATCH_SIZE, $rowCount);
+        if ($progress >= $rowCount) {
             $now = new \DateTime();
             update_option(INSERTION_COUNT_OPTION, $insert_count);
             update_option(UPDATE_COUNT_OPTION, $update_count);
@@ -190,7 +201,7 @@ class WC_CSV_Importer {
         wp_send_json([
             'completed' => false,
             'next_offset' => $progress,
-            'total_rows' => count($rows),
+            'total_rows' => $rowCount,
             'insert_count' => $insert_count,
             'update_count' => $update_count,
         ]);
