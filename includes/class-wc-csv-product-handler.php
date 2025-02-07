@@ -11,7 +11,13 @@ class WC_CSV_Product_Handler {
         $badCount = 0;
         foreach ($csv_data as $row) {
             if(count($header) != count($row)){
+                var_dump($header);
+                echo nl2br("\n--------------------------------\n");
+                var_dump($row);
                 $badCount++;
+                if($badCount == 5){
+                    wp_die("bad count: " . $badCount);
+                }
                 continue;
             }
 

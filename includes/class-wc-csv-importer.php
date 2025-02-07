@@ -70,7 +70,7 @@ class WC_CSV_Importer {
             wp_die(__('Vous n’avez pas la permission d’effectuer cette action.'));
         }
 
-        if (!isset($_POST['csv_url']) || empty($_POST['csv_url'])) {
+        /*if (!isset($_POST['csv_url']) || empty($_POST['csv_url'])) {
             $csv_url = get_option('wc_csv_import_url', '');
             if(empty($csv_url))
                 wp_die(__('Aucune URL de fichier CSV spécifiée.'));
@@ -94,12 +94,18 @@ class WC_CSV_Importer {
 
         if (wp_remote_retrieve_response_code($response) !== 200) {
             wp_die(__('Erreur HTTP lors du téléchargement du fichier CSV : ' . wp_remote_retrieve_response_message($response)));
+        }*/
+
+        $csv_file = '/var/www/clients/client0/web1/tmp/data.csv';
+        if(!is_file($csv_file)){
+            wp_die(__('Fichier CSV introuvable.'));
         }
+       
 
         $handler = new WC_CSV_Product_Handler();
         $handler->import_products($csv_file);
 
-        unlink($csv_file); // Supprime le fichier après traitement
+        //unlink($csv_file); // Supprime le fichier après traitement
 
         wp_redirect(admin_url('admin.php?page=wc_csv_importer&import_success=1'));
         exit;
