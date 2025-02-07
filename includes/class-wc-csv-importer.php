@@ -164,7 +164,7 @@ class WC_CSV_Importer {
         $update_count = $_POST['update_count'];
 
         $file_content = json_decode(file_get_contents($file_path), true);
-        $header = $file_content['header'];
+        $header = explode(',', $file_content['header']);
         $rows = $file_content['rows'];
         $batch = array_slice($rows, $offset, BATCH_SIZE);
 
