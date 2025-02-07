@@ -3,7 +3,13 @@
 
 class WC_CSV_Product_Handler {
     public function import_products($file_path) {
-        $csv_data = array_map('str_getcsv', file($file_path), ';');
+        $fileContentArray = file($file_path);
+        $separators = array();
+        for($i = 0; $i < count($fileContentArray); $i++) {
+            $separators[] = ";";
+        }
+
+        $csv_data = array_map('str_getcsv', $fileContentArray, $separators);
         $header = array_shift($csv_data);
 
         $insertionCount = 0;
