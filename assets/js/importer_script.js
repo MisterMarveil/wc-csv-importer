@@ -9,7 +9,7 @@ jQuery(document).ready(function($) {
     
     $('#start-import').click(function() {
         $('#import-status').html('<p>Initializing import...</p>');
-        alert(ajaxurl);
+        //alert(ajaxurl);
         $.ajax({
             url: ajaxurl,
             type: 'POST',

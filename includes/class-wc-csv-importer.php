@@ -74,6 +74,8 @@ class WC_CSV_Importer {
     }
 
     public function initialize_import() {
+        return "good to go";
+        
         if (!isset($_POST['csv_url']) || empty($_POST['csv_url'])) {
             $csv_url = get_option('wc_csv_import_url', '');
             if(empty($csv_url))
