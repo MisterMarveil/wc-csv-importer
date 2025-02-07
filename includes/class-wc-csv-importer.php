@@ -82,6 +82,7 @@ class WC_CSV_Importer {
         
         // Import Status
         echo '<div id="import-status" style="margin-top: 10px;"></div>';
+        echo plugins_url( '../assets/js/importer_script.js', __FILE__);
         echo '</div>';        
         echo '</div>';
     }
