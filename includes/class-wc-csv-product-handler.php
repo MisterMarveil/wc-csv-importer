@@ -87,7 +87,7 @@ class WC_CSV_Product_Handler {
         // Map shipping & customs information
         update_post_meta($product->get_id(), '_hs_intrastat_code', $data['hs_intrastat_code']);
         update_post_meta($product->get_id(), '_shipping_costs', $data['shipping_costs']);
-        
+        return $product;
         // Integrate variations
         if (!empty($data['variations_info_xml'])) {
             $this->process_variations($product->get_id(), $data['variations_info_xml']);
@@ -97,7 +97,7 @@ class WC_CSV_Product_Handler {
         if (!empty($data['translations_xml'])) {
             update_post_meta($product->get_id(), '_translations', $data['translations_xml']);
         }
-        return $product;
+        
 
         // Set images
         if (!empty($data['main_image_url'])) {
@@ -108,7 +108,7 @@ class WC_CSV_Product_Handler {
         }
 
         $product->save();
-        return $product;
+        
     }
 
     private function remove_old_images($product_id) {
