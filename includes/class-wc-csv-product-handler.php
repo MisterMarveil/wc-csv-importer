@@ -54,7 +54,7 @@ class WC_CSV_Product_Handler {
             $product = new WC_Product_Simple();            
         }
  
-        return $product;
+        
         $product->set_name($data['name']);
         $product->set_sku($data['sku']);
         $product->set_short_description($data['description']); // Short description
@@ -64,7 +64,7 @@ class WC_CSV_Product_Handler {
         $product->set_stock_quantity($data['available_stock']);
         $product->set_stock_status($data['stock_status']);
          
-        
+        return $product;
         // Assign purchase price
         update_post_meta($product->get_id(), '_purchase_price', $data['dealer_price']);
         
