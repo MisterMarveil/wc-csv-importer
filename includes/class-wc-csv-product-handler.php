@@ -78,7 +78,7 @@ class WC_CSV_Product_Handler {
         if (!empty($data['brand'])) {
             $this->set_product_brand($product->get_id(), $data['brand']);
         }
-
+        return $product;
          // Assign EAN code
          if (!empty($data['ean'])) {
             update_post_meta($product->get_id(), '_ean_code', $data['ean']);
@@ -99,7 +99,7 @@ class WC_CSV_Product_Handler {
             update_post_meta($product->get_id(), '_ean_code', $data['barcode_info_xml']);
         }
         
-        return $product;
+        
         // Map shipping & customs information
         update_post_meta($product->get_id(), '_hs_intrastat_code', $data['hs_intrastat_code']);
         update_post_meta($product->get_id(), '_shipping_costs', $data['shipping_costs']);
