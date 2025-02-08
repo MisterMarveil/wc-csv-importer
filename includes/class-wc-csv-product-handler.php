@@ -133,6 +133,7 @@ class WC_CSV_Product_Handler {
     
             delete_post_meta($product_id, '_product_image_gallery');
         }
+        return "good";
     }
     
 
