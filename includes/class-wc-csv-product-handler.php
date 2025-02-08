@@ -8,6 +8,7 @@ class WC_CSV_Product_Handler {
         $updateCount = 0;
         $badCount = 0;
         foreach ($batch as $row) {
+            return $row;
             if(count($header) != count($row)){
                 var_dump($header);
                 echo nl2br("\n--------------------------------\n");
