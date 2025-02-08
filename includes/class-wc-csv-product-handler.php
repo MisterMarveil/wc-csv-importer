@@ -25,10 +25,10 @@ class WC_CSV_Product_Handler {
         
             $last_modification = strtotime($product_data['date_of_last_modification']);
             $current_time = time();
-            return $last_modification;
+            
             // Vérifier si le produit existe déjà
             $product_id = wc_get_product_id_by_sku($sku);
-            
+            return $product_id;
             if ($product_id) {
                 // Vérifier si la modification est récente
                 if (($current_time - $last_modification) <= TIME_TO_CHECK) {
