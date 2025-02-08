@@ -78,7 +78,7 @@ class WC_CSV_Importer {
         
         // Progress Bar
         echo '<div style="margin-top: 20px; width: 100%; background-color: #ddd; height: 20px; border-radius: 5px;">';
-        echo '<div id="import-progress" data-percent="0" style="margin-top: 5%" class="hidden big dark blue">0%</div>';       
+        echo '<div id="import-progress" data-percent="0" style="margin-top: 7%" class="hidden big red">0%</div>';       
         echo '</div>';
         
         // Import Status
@@ -156,12 +156,12 @@ class WC_CSV_Importer {
         if (!isset($_POST['insert_count'])) {
             wp_die(__('Oops! insert_count non précisé.'));
         }
-        $insert_count = $_POST['insert_count'];
+        $insert_count = (int) $_POST['insert_count'];
         
         if (!isset($_POST['update_count'])) {
             wp_die(__('Oops! update_count non précisé.'));
         }
-        $update_count = $_POST['update_count'];
+        $update_count = (int) $_POST['update_count'];
 
        /* $file_content = json_decode(file_get_contents($file_path), true);
         
@@ -182,8 +182,7 @@ class WC_CSV_Importer {
 
         $handler = new WC_CSV_Product_Handler();
         $result = $handler->import_products($batch, $header);
-        wp_send_json(['next_offset' => $offset + 1, "row" => $result]);
-        wp_die();
+        
         $insert_count += $result['insert_count'];
         $update_count += $result['update_count'];
         $rowCount = count($csv_data);

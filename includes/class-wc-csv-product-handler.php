@@ -31,11 +31,11 @@ class WC_CSV_Product_Handler {
             if ($product_id) {
                 // Vérifier si la modification est récente
                 if (($current_time - $last_modification) <= TIME_TO_CHECK) {
-                   return $this->import_product($product_data, true, $product_id);   
+                    $this->import_product($product_data, true, $product_id);   
                     $updateCount++;                 
                 }
             } else {
-                return $this->import_product($product_data);
+                $this->import_product($product_data);
                 $insertionCount++;
             }
         }
@@ -76,7 +76,7 @@ class WC_CSV_Product_Handler {
         
         // Assign brand
         if (!empty($data['brand'])) {
-            $this->set_product_brand($product, $data['brand']);
+            $this->set_product_brand($product->get_id(), $data['brand']);
         }
         
         // Assign barcodes
@@ -88,10 +88,9 @@ class WC_CSV_Product_Handler {
         update_post_meta($product->get_id(), '_hs_intrastat_code', $data['hs_intrastat_code']);
         update_post_meta($product->get_id(), '_shipping_costs', $data['shipping_costs']);
        
-        return $data['variations_info_xml'];
         // Integrate variations
         if (!empty($data['variations_info_xml'])) {
-           return $this->process_variations($product->get_id(), $data['variations_info_xml']);
+            $this->process_variations($product->get_id(), $data['variations_info_xml']);
         }
         
         // Multi-language support
@@ -135,7 +134,35 @@ class WC_CSV_Product_Handler {
             delete_post_meta($product_id, '_product_image_gallery');
         }
     }
-    
+
+    private function process_variations($product_id, $variations_xml) {
+        $xml = simplexml_load_string($variations_xml);
+        if (!$xml) {
+            return;
+        }
+
+        foreach ($xml->variant as $variant) {
+            $variation = new WC_Product_Variation();
+            $variation->set_parent_id($product_id);
+            
+            $sku = (string) $variant->item_group_id;
+            $variation->set_sku($sku);
+            
+            $attributes = [];
+            for ($i = 1; $i <= 2; $i++) {
+                $groupname = (string) $variant->{'var_groupname_' . $i};
+                $var_name = (string) $variant->{'var_name_' . $i};
+                $var_value = (string) $variant->{'var_value_' . $i};
+                
+                if (!empty($var_name) && !empty($var_value)) {
+                    $attributes[$var_name] = $var_value;
+                }
+            }
+            
+            $variation->set_attributes($attributes);
+            $variation->save();
+        }
+    }   
 
 
     private function create_and_assign_categories($category_string) {
@@ -155,14 +182,18 @@ class WC_CSV_Product_Handler {
         return $category_ids;
     }
 
-    private function set_product_brand($product, $brand_name) {
+    private function set_product_brand($product_id, $brand_name) {
         $attribute_name = 'pa_brand';
-
+        
         if (!taxonomy_exists($attribute_name)) {
-            wp_insert_term($brand_name, $attribute_name);
+            register_taxonomy($attribute_name, 'product', [
+                'label' => __('Brand', 'woocommerce'),
+                'rewrite' => false,
+                'hierarchical' => false,
+            ]);
         }
-
-        wp_set_object_terms($product->get_id(), $brand_name, $attribute_name);
+        
+        wp_set_object_terms($product_id, $brand_name, $attribute_name, false);
     }
 
     private function set_product_image($product, $image_url) {
