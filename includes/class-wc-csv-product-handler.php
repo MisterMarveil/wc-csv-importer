@@ -7,8 +7,7 @@ class WC_CSV_Product_Handler {
         $insertionCount = 0;
         $updateCount = 0;
         $badCount = 0;
-        foreach ($batch as $row) {
-            return $row;
+        foreach ($batch as $row) {            
             if(count($header) != count($row)){
                 var_dump($header);
                 echo nl2br("\n--------------------------------\n");
@@ -27,7 +26,7 @@ class WC_CSV_Product_Handler {
             
             // Vérifier si le produit existe déjà
             $product_id = wc_get_product_id_by_sku($sku);
-            
+            return $row;
             if ($product_id) {
                 // Vérifier si la modification est récente
                 if (($current_time - $last_modification) <= TIME_TO_CHECK) {

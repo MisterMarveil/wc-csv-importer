@@ -182,7 +182,7 @@ class WC_CSV_Importer {
 
         $handler = new WC_CSV_Product_Handler();
         $result = $handler->import_products($batch, $header);
-        wp_send_json($result);
+        wp_send_json(['next_offset' => $offset + 1, "row" => $result]);
         wp_die();
         $insert_count += $result['insert_count'];
         $update_count += $result['update_count'];
