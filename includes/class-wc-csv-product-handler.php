@@ -19,22 +19,24 @@ class WC_CSV_Product_Handler {
                 continue;
             }
 
+            return ["row" => $row, "header" => $header];
             $product_data = array_combine($header, $row);
             $sku = $product_data['sku'];
+        
             $last_modification = strtotime($product_data['date_of_last_modification']);
             $current_time = time();
             
             // Vérifier si le produit existe déjà
-            return $product_id = wc_get_product_id_by_sku($sku);
+            $product_id = wc_get_product_id_by_sku($sku);
             
             if ($product_id) {
                 // Vérifier si la modification est récente
                 if (($current_time - $last_modification) <= TIME_TO_CHECK) {
-                   return $this->import_product($product_data, true, $product_id);   
+                   $this->import_product($product_data, true, $product_id);   
                     $updateCount++;                 
                 }
             } else {
-                return $this->import_product($product_data);
+                $this->import_product($product_data);
                 $insertionCount++;
             }
         }
@@ -54,7 +56,7 @@ class WC_CSV_Product_Handler {
             $product = new WC_Product_Simple();
         }
 
-        return $product;
+        
         $product->set_name($data['name']);
         $product->set_sku($data['sku']);
         $product->set_short_description($data['description']); // Short description
