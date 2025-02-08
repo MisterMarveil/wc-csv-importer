@@ -37,9 +37,9 @@ jQuery(document).ready(function($) {
             return;
         }
 
-        let percentage = parseInt((offset / batchSize + 1) * 100);
+        let percentage = parseInt((offset / (totalRows + 1)) * 100);
         $("#import-progress").percircle({
-            text: offset+"/"+(batchSize + 1)+"%",
+            text: percentage+"%",
             percent: percentage,
             progressBarColor: percentage < 25 ? "#CC3366" : (percentage < 50 ? "yellow" : (percentage < 75 ? 'orange' : "green"))
           });
