@@ -20,12 +20,12 @@ class WC_CSV_Product_Handler {
             }
 
             $product_data = array_combine($header, $row);
-            return $product_data;
+            
             $sku = $product_data['sku'];
         
             $last_modification = strtotime($product_data['date_of_last_modification']);
             $current_time = time();
-            
+            return $last_modification;
             // Vérifier si le produit existe déjà
             $product_id = wc_get_product_id_by_sku($sku);
             
