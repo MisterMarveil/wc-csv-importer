@@ -166,7 +166,9 @@ class WC_CSV_Importer {
             update_option(UPDATE_COUNT_OPTION, $update_count);
             update_option(LAST_CRON_TIME_OPTION, $now->getTimestamp());
         
-            unlink($file_path); // Delete file when done
+            $csv_file = get_option('wc_csv_import_file', '');        
+            if(is_file($csv_file))
+                unlink($csv_file); // Delete file when done
             wp_send_json(['completed' => true]);
             wp_die();
         }

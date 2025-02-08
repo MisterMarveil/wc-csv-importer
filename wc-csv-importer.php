@@ -61,25 +61,11 @@ function wc_csv_cron_import() {
         wp_die('Unauthorized', 401);
     }
 
-    $csv_url = get_option('wc_csv_import_url', '');
-    if (empty($csv_url)) {
-        wp_die('No CSV URL defined');
-    }
-
-   
-     $fileContentArray = file($csv_file);        
-    $separators = array();
-    for($i = 0; $i < count($fileContentArray); $i++) {
-        $separators[] = ";";
-    }
-    $csv_data = array_map('str_getcsv', $fileContentArray, $separators);
-    $header = array_shift($csv_data);
-
-    $handler = new WC_CSV_Product_Handler();
-    $handler->import_products($csv_data, $header);
-    unlink($csv_file);
+    $handler = new WC_CSV_Importer();
+    $handler->process_csv_import();
+    $offset = get_option('wc_csv_import_offset', 0);
 
     $end = new \DateTime();
-    echo 'Import completed successfully in '.($end->getTimestamp() - $start->getTimestamp()).'seconds';
+    echo 'Imported  '+($offset == 0  ? 'completed successfully' : $offset+' products') +' in '.($end->getTimestamp() - $start->getTimestamp()).'seconds';
     exit;
 }
