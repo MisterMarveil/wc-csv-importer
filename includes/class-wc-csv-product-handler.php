@@ -25,7 +25,7 @@ class WC_CSV_Product_Handler {
             $current_time = time();
             
             // Vérifier si le produit existe déjà
-            $product_id = wc_get_product_id_by_sku($sku);
+            return $product_id = wc_get_product_id_by_sku($sku);
             
             if ($product_id) {
                 // Vérifier si la modification est récente
@@ -54,6 +54,7 @@ class WC_CSV_Product_Handler {
             $product = new WC_Product_Simple();
         }
 
+        return $product;
         $product->set_name($data['name']);
         $product->set_sku($data['sku']);
         $product->set_short_description($data['description']); // Short description
@@ -96,7 +97,7 @@ class WC_CSV_Product_Handler {
             update_post_meta($product->get_id(), '_translations', $data['translations_xml']);
         }
         return $product;
-        
+
         // Set images
         if (!empty($data['main_image_url'])) {
             $this->set_product_image($product, $data['main_image_url']);
