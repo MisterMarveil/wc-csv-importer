@@ -63,8 +63,7 @@ class WC_CSV_Product_Handler {
         $product->set_manage_stock(true);
         $product->set_stock_quantity($data['available_stock']);
         $product->set_stock_status($data['stock_status']);
-         return ["product" => $product];
-       
+         
         
         // Assign purchase price
         update_post_meta($product->get_id(), '_purchase_price', $data['dealer_price']);
@@ -109,6 +108,7 @@ class WC_CSV_Product_Handler {
         }
 
         $product->save();
+        return $product;
     }
 
     private function remove_old_images($product_id) {
