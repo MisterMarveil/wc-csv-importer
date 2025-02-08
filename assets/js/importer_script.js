@@ -22,7 +22,6 @@ jQuery(document).ready(function($) {
                     $('#import-status').html('<p style="color: red;">' + response.error + '</p>');
                     return;
                 }
-                filePath = response.file_path;
                 totalRows = response.total_rows;
 
                 $('#import-status').html('<p>File loaded: ' + totalRows + ' products detected.</p>');
@@ -45,6 +44,7 @@ jQuery(document).ready(function($) {
             percent: percentage,
             progressBarColor: percentage < 25 ? "#CC3366" : (percentage < 50 ? "yellow" : (percentage < 75 ? 'orange' : "green"))
           });
+          $('#import-status').html('<p>Actual progress ' + offset + '/'+totalRows+'('+percentage+'%) products detected.</p>');
         
         $.ajax({
             url: ajaxurl,

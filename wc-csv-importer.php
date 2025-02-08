@@ -20,6 +20,8 @@ define('LAST_CRON_TIME_OPTION', 'wc_csv_import_last_cron_timestamp');
 define('INVALID_ENTITY_COUNT_OPTION', 'wc_csv_import_last_bad_entity');
 define('PRODUCT_OFFSET_OPTION', 'wc_csv_import_offset');
 define('PRODUCT_FILE_OPTION', 'wc_csv_import_file');
+define('CSV_URL_DEFAULT_VALUE', 'https://store.dreamlove.es/dyndata/exportaciones/csvzip/catalog_1_52_125_2_dd65d46c9efc3d9364272c55399d5b56_csv_plain.csv');
+define('CSV_FILE_DEFAULT_VALUE', '/var/www/clients/client0/web1/tmp/data.csv');
 
 // Inclure les classes nécessaires
 include_once plugin_dir_path(__FILE__) . 'includes/class-wc-csv-importer.php';
@@ -64,22 +66,7 @@ function wc_csv_cron_import() {
         wp_die('No CSV URL defined');
     }
 
-    $csv_file = wp_tempnam($csv_url);
-    $response = wp_remote_get($csv_url, array(
-        'timeout'  => 1500,
-        'stream'   => true,
-        'filename' => $csv_file
-    ));
-
-    if (is_wp_error($response)) {
-        wp_die('Error downloading CSV: ' . $response->get_error_message());
-    }
-
-    if (wp_remote_retrieve_response_code($response) !== 200) {
-        wp_die('HTTP error while downloading CSV: ' . wp_remote_retrieve_response_message($response));
-    }
-
-
+   
      $fileContentArray = file($csv_file);        
     $separators = array();
     for($i = 0; $i < count($fileContentArray); $i++) {

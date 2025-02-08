@@ -90,9 +90,19 @@ class WC_CSV_Importer {
         echo '</div>';
     }
 
-    public function initialize_csv_import() {        
+    public function initialize_csv_import() { 
+        $csv_data = $this->retrieveCsvData();       
+        $total_rows = count($csv_data) - 1; // Exclude header row
+        
+        wp_send_json([
+            'total_rows' => $total_rows,            
+        ]);
+        wp_die;
+    }
+
+    private function retrieveCsvData(){
         if (!isset($_POST['csv_url']) || empty($_POST['csv_url'])) {
-            $csv_url = get_option('wc_csv_import_url', '');
+            $csv_url = get_option('wc_csv_import_url', CSV_URL_DEFAULT_VALUE);
             if(empty($csv_url))
                 wp_die(__('Aucune URL de fichier CSV spécifiée.'));
         }else{
@@ -100,86 +110,42 @@ class WC_CSV_Importer {
             update_option('wc_csv_import_url', esc_url_raw($csv_url));        
         }
 
-        //$csv_file = wp_tempnam($csv_url);
-        $csv_file = "/var/www/clients/client0/web1/tmp/data.csv";
-        /*$response = wp_remote_get($csv_url, array(
-            'timeout'  => 30,
-            'stream'   => true,
-            'filename' => $csv_file
-        ));
+        $offset = get_option('wc_csv_import_offset', 0);
 
-        if (is_wp_error($response)) {
-            return ['error' => 'Error downloading CSV: ' . $response->get_error_message()];
+        if($offset == 0){
+            $csv_file = wp_tempnam($csv_url);
+            $response = wp_remote_get($csv_url, array(
+                'timeout'  => 1500,
+                'stream'   => true,
+                'filename' => $csv_file
+            ));
+            if (is_wp_error($response)) {
+                wp_die('Error downloading CSV: ' . $response->get_error_message());
+            }
+        
+            if (wp_remote_retrieve_response_code($response) !== 200) {
+                wp_die('HTTP error while downloading CSV: ' . wp_remote_retrieve_response_message($response));
+            }
+        }else{
+            $csv_file = get_option('wc_csv_import_file', CSV_FILE_DEFAULT_VALUE);        
+            if (!is_file($csv_file)) {
+                wp_die("Error retrieving csv file while offset was $offset");
+            }
         }
-
-        if (wp_remote_retrieve_response_code($response) !== 200) {
-            return ['error' => 'HTTP error: ' . wp_remote_retrieve_response_message($response)];
-        }*/
-
-       
-
+    
         $fileContentArray = file($csv_file);
-        //$fileContent = file_get_contents($csv_file);
         
         $separators = array();
         for($i = 0; $i < count($fileContentArray); $i++) {
             $separators[] = ";";
-        }
-
-        
-        $csv_data = array_map('str_getcsv', $fileContentArray, $separators);
-        $total_rows = count($csv_data) - 1; // Exclude header row
-        //$header = array_shift($csv_data);
-        
-        //file_put_contents($csv_file, json_encode(['header' => $header, 'rows' => $csv_data]));
-
-        wp_send_json([
-            'file_path' => $csv_file,
-            'total_rows' => $total_rows,            
-        ]);
-        wp_die;
+        }        
+        return  array_map('str_getcsv', $fileContentArray, $separators);
     }
 
-
-    public function process_csv_import() {
-        if (!current_user_can('manage_options')) {
-            wp_die(__('Vous n’avez pas la permission d’effectuer cette action.'));
-        }
-
-        if (!isset($_POST['file_path']) || !is_file($_POST['file_path'])) {
-                wp_die(__('Oops! fichier csv non spécifié ou inexistant.'));
-        }
-        $file_path = $_POST['file_path'];
-        
-        if (!isset($_POST['offset'])) {
-            wp_die(__('Oops! offset non précisé.'));
-        }
-        $offset = $_POST['offset'];
-        
-        if (!isset($_POST['insert_count'])) {
-            wp_die(__('Oops! insert_count non précisé.'));
-        }
-        $insert_count = (int) $_POST['insert_count'];
-        
-        if (!isset($_POST['update_count'])) {
-            wp_die(__('Oops! update_count non précisé.'));
-        }
-        $update_count = (int) $_POST['update_count'];
-
-       /* $file_content = json_decode(file_get_contents($file_path), true);
-        
-        $header = explode(',', $file_content['header'][0]);
-        $rows = $file_content['rows'];*/
-        $fileContentArray = file($file_path);        
-        $separators = array();
-        for($i = 0; $i < count($fileContentArray); $i++) {
-            $separators[] = ";";
-        }
-
-        
-        $csv_data = array_map('str_getcsv', $fileContentArray, $separators);
+    public function process_csv_import() {        
+        $csv_data = $this->retrieveCsvData();
         $header = array_shift($csv_data);
-
+        $offset = get_option('wc_csv_import_offset', 0);
         $batch = array_slice($csv_data, $offset, BATCH_SIZE);
         
 
@@ -192,8 +158,8 @@ class WC_CSV_Importer {
         
 
         $progress = min($offset + BATCH_SIZE, $rowCount);
-        update_option(PRODUCT_OFFSET_OPTION, $offset);
-        
+        update_option(PRODUCT_OFFSET_OPTION, $progress);
+
         if ($progress >= $rowCount) {
             $now = new \DateTime();
             update_option(INSERTION_COUNT_OPTION, $insert_count);
