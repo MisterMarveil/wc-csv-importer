@@ -50,13 +50,11 @@ class WC_CSV_Product_Handler {
             }
     
             $product = wc_get_product($product_id);           
-            return $this->remove_old_images($product_id);
+            $this->remove_old_images($product_id);
         }else{
             $product = new WC_Product_Simple();            
         }
-
-        return ["product" => $product];
-        
+ 
         $product->set_name($data['name']);
         $product->set_sku($data['sku']);
         $product->set_short_description($data['description']); // Short description
@@ -65,6 +63,8 @@ class WC_CSV_Product_Handler {
         $product->set_manage_stock(true);
         $product->set_stock_quantity($data['available_stock']);
         $product->set_stock_status($data['stock_status']);
+         return ["product" => $product];
+       
         
         // Assign purchase price
         update_post_meta($product->get_id(), '_purchase_price', $data['dealer_price']);
@@ -133,7 +133,6 @@ class WC_CSV_Product_Handler {
     
             delete_post_meta($product_id, '_product_image_gallery');
         }
-        return "good";
     }
     
 
