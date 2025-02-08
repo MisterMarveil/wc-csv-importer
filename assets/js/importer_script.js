@@ -3,8 +3,8 @@ jQuery(document).ready(function($) {
     let totalRows = 0;
     let insertCount = 0;
     let updateCount = 0;
-    let offset = 0;
-    let batchSize = 5;
+    let offset = 80;
+    let batchSize = 10;
     $("#import-progress").percircle();
     
     $('#start-import').click(function() {

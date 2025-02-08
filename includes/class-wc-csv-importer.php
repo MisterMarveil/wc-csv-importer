@@ -97,9 +97,9 @@ class WC_CSV_Importer {
             update_option('wc_csv_import_url', esc_url_raw($csv_url));        
         }
 
-        $csv_file = wp_tempnam($csv_url);
-        
-        $response = wp_remote_get($csv_url, array(
+        //$csv_file = wp_tempnam($csv_url);
+        $csv_file = "/var/www/clients/client0/web1/tmp/data.csv";
+        /*$response = wp_remote_get($csv_url, array(
             'timeout'  => 30,
             'stream'   => true,
             'filename' => $csv_file
@@ -111,7 +111,7 @@ class WC_CSV_Importer {
 
         if (wp_remote_retrieve_response_code($response) !== 200) {
             return ['error' => 'HTTP error: ' . wp_remote_retrieve_response_message($response)];
-        }
+        }*/
 
        
 
@@ -132,7 +132,7 @@ class WC_CSV_Importer {
 
         wp_send_json([
             'file_path' => $csv_file,
-            'total_rows' => $total_rows,
+            'total_rows' => $total_rows,            
         ]);
         wp_die;
     }
