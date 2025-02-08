@@ -28,15 +28,14 @@ class WC_CSV_Product_Handler {
             
             // Vérifier si le produit existe déjà
             $product_id = wc_get_product_id_by_sku($sku);
-            return $product_id;
             if ($product_id) {
                 // Vérifier si la modification est récente
                 if (($current_time - $last_modification) <= TIME_TO_CHECK) {
-                   $this->import_product($product_data, true, $product_id);   
+                   return $this->import_product($product_data, true, $product_id);   
                     $updateCount++;                 
                 }
             } else {
-                $this->import_product($product_data);
+                return $this->import_product($product_data);
                 $insertionCount++;
             }
         }
@@ -51,9 +50,11 @@ class WC_CSV_Product_Handler {
             }
     
             $product = wc_get_product($product_id);
+            return $product;
             $this->remove_old_images($product_id);
         }else{
             $product = new WC_Product_Simple();
+            return $product;
         }
 
         
