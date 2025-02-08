@@ -64,7 +64,7 @@ class WC_CSV_Product_Handler {
         $product->set_stock_quantity($data['available_stock']);
         $product->set_stock_status($data['stock_status']);
          
-        return $product;
+        
         // Assign purchase price
         update_post_meta($product->get_id(), '_purchase_price', $data['dealer_price']);
         
@@ -99,6 +99,7 @@ class WC_CSV_Product_Handler {
             update_post_meta($product->get_id(), '_ean_code', $data['barcode_info_xml']);
         }
         
+        return $product;
         // Map shipping & customs information
         update_post_meta($product->get_id(), '_hs_intrastat_code', $data['hs_intrastat_code']);
         update_post_meta($product->get_id(), '_shipping_costs', $data['shipping_costs']);
