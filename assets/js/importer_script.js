@@ -1,7 +1,7 @@
 jQuery(document).ready(function($) {
-    let filePath = '';
+    let filePath = CSV.file;
     let totalRows = 0;   
-    let offset = 80;
+    let offset = CSV.offset;
     let maxRetries = 3;
     let retryCount = 0;
 

@@ -1,7 +1,5 @@
  
 <?php
-
-
 // Définition des classes
 class WC_CSV_Importer {
     public function __construct() {
@@ -11,6 +9,7 @@ class WC_CSV_Importer {
         add_action('admin_post_wc_csv_reset', [$this, 'reset_woocommerce_data']);
         add_action('admin_post_wc_csv_save_url', [$this, 'wc_csv_save_url']);
         add_action( 'admin_enqueue_scripts', [$this, 'wc_importer_scripts']);
+
     }
 
     public function wc_importer_scripts() {
@@ -22,9 +21,13 @@ class WC_CSV_Importer {
 
 
         wp_register_script( 'ajax-importer-script', plugins_url( 'wc-csv-importer/assets/js/importer_script.js'), array ('percircle-script')  );
+        $values_array = array(
+            'offset' => get_option(PRODUCT_OFFSET_OPTION, 0),
+            'file' => get_option(PRODUCT_FILE_OPTION, '/var/www/clients/client0/web1/tmp/data.csv')
+        );
+        wp_localize_script( 'ajax-importer-script', 'CSV', $values_array );
         wp_enqueue_script( 'ajax-importer-script' );
-    
-    
+
     }   
    
 
@@ -189,6 +192,8 @@ class WC_CSV_Importer {
         
 
         $progress = min($offset + BATCH_SIZE, $rowCount);
+        update_option(PRODUCT_OFFSET_OPTION, $offset);
+        
         if ($progress >= $rowCount) {
             $now = new \DateTime();
             update_option(INSERTION_COUNT_OPTION, $insert_count);
