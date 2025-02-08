@@ -78,7 +78,7 @@ class WC_CSV_Product_Handler {
         if (!empty($data['brand'])) {
             $this->set_product_brand($product->get_id(), $data['brand']);
         }
-        return $product;
+        
          // Assign EAN code
          if (!empty($data['ean'])) {
             update_post_meta($product->get_id(), '_ean_code', $data['ean']);
@@ -217,7 +217,7 @@ class WC_CSV_Product_Handler {
          
          // Ensure brand is linked to the product
          if (!is_wp_error($brand_term)) {
-             wp_set_object_terms($product->get_id(), (int) $brand_term['term_id'], $attribute_name);
+             wp_set_object_terms($product_id, (int) $brand_term['term_id'], $attribute_name);
          }
     }
 
