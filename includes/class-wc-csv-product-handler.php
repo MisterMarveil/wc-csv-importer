@@ -26,15 +26,15 @@ class WC_CSV_Product_Handler {
             
             // Vérifier si le produit existe déjà
             $product_id = wc_get_product_id_by_sku($sku);
-            return $row;
+            
             if ($product_id) {
                 // Vérifier si la modification est récente
                 if (($current_time - $last_modification) <= TIME_TO_CHECK) {
-                    $this->import_product($product_data, true, $product_id);   
+                   return $this->import_product($product_data, true, $product_id);   
                     $updateCount++;                 
                 }
             } else {
-                $this->import_product($product_data);
+                return $this->import_product($product_data);
                 $insertionCount++;
             }
         }
@@ -95,6 +95,7 @@ class WC_CSV_Product_Handler {
         if (!empty($data['translations_xml'])) {
             update_post_meta($product->get_id(), '_translations', $data['translations_xml']);
         }
+        return $product;
         
         // Set images
         if (!empty($data['main_image_url'])) {
