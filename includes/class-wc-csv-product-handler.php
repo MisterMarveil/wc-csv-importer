@@ -87,10 +87,11 @@ class WC_CSV_Product_Handler {
         // Map shipping & customs information
         update_post_meta($product->get_id(), '_hs_intrastat_code', $data['hs_intrastat_code']);
         update_post_meta($product->get_id(), '_shipping_costs', $data['shipping_costs']);
-        return $product;
+       
+        return $data['variations_info_xml'];
         // Integrate variations
         if (!empty($data['variations_info_xml'])) {
-            $this->process_variations($product->get_id(), $data['variations_info_xml']);
+           return $this->process_variations($product->get_id(), $data['variations_info_xml']);
         }
         
         // Multi-language support

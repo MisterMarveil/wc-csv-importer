@@ -78,7 +78,7 @@ class WC_CSV_Importer {
         
         // Progress Bar
         echo '<div style="margin-top: 20px; width: 100%; background-color: #ddd; height: 20px; border-radius: 5px;">';
-        echo '<div id="import-progress" data-percent="0" class="hidden big blue">0%</div>';       
+        echo '<div id="import-progress" data-percent="0" style="margin-top: 5%" class="hidden big dark blue">0%</div>';       
         echo '</div>';
         
         // Import Status
