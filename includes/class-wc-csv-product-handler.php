@@ -49,14 +49,13 @@ class WC_CSV_Product_Handler {
                 wp_die(__('besoin d\'un product id pour la mise à jour. aucun fourni.'));
             }
     
-            $product = wc_get_product($product_id);
-            return $product;
-            $this->remove_old_images($product_id);
+            $product = wc_get_product($product_id);           
+            return $this->remove_old_images($product_id);
         }else{
-            $product = new WC_Product_Simple();
-            return $product;
+            $product = new WC_Product_Simple();            
         }
 
+        return ["product" => $product];
         
         $product->set_name($data['name']);
         $product->set_sku($data['sku']);
