@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 
 // Définir la constante TIME_TO_CHECK (en secondes)
 define('TIME_TO_CHECK', 3600);
-define('BATCH_SIZE', 5);
+define('BATCH_SIZE', 10);
 define('INSERTION_COUNT_OPTION', 'wc_csv_import_last_insert_count');
 define('UPDATE_COUNT_OPTION', 'wc_csv_import_last_update_count');
 define('LAST_CRON_TIME_OPTION', 'wc_csv_import_last_cron_timestamp');
