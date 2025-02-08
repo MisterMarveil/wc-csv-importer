@@ -24,17 +24,17 @@ class WC_CSV_Product_Handler {
         
             $last_modification = strtotime($product_data['date_of_last_modification']);
             $current_time = time();
-            return $product_data;
+            
             // Vérifier si le produit existe déjà
             $product_id = wc_get_product_id_by_sku($sku);
             if ($product_id) {
                 // Vérifier si la modification est récente
                 if (($current_time - $last_modification) <= TIME_TO_CHECK) {
-                    $this->import_product($product_data, true, $product_id);   
+                    return $this->import_product($product_data, true, $product_id);   
                     $updateCount++;                 
                 }
             } else {
-                $this->import_product($product_data);
+                return $this->import_product($product_data);
                 $insertionCount++;
             }
         }
@@ -54,6 +54,7 @@ class WC_CSV_Product_Handler {
             $product = new WC_Product_Simple();            
         }
  
+        return $product;
         $product->set_name($data['name']);
         $product->set_sku($data['sku']);
         $product->set_short_description($data['description']); // Short description
