@@ -59,7 +59,7 @@ class WC_CSV_Product_Handler {
         $product->set_sku($data['sku']);
         $product->set_short_description($data['description']); // Short description
         $product->set_description($data['html_description']); // Long description
-        $product->set_regular_price($data['price']);
+        $product->set_regular_price($data['recommended_sale_price']);
         $product->set_manage_stock(true);
         $product->set_stock_quantity($data['available_stock']);
         $product->set_stock_status($data['stock_status']);
@@ -77,6 +77,21 @@ class WC_CSV_Product_Handler {
         // Assign brand
         if (!empty($data['brand'])) {
             $this->set_product_brand($product->get_id(), $data['brand']);
+        }
+
+         // Assign EAN code
+         if (!empty($data['ean'])) {
+            update_post_meta($product->get_id(), '_ean_code', $data['ean']);
+        }
+
+        // Assign VAT percentage
+        if (!empty($data['vat_percentage'])) {
+            update_post_meta($product->get_id(), '_vat_percentage', $data['vat_percentage']);
+        }
+
+         // Assign shipping costs
+         if (!empty($data['shipping_costs'])) {
+            update_post_meta($product->get_id(), '_shipping_costs', $data['shipping_costs']);
         }
         
         // Assign barcodes
@@ -190,10 +205,19 @@ class WC_CSV_Product_Handler {
                 'label' => __('Brand', 'woocommerce'),
                 'rewrite' => false,
                 'hierarchical' => false,
-            ]);
+            ]);        
         }
         
-        wp_set_object_terms($product_id, $brand_name, $attribute_name, false);
+         // Check if the brand exists, if not create it
+         $brand_term = term_exists($brand_name, $attribute_name);
+         if (!$brand_term) {
+             $brand_term = wp_insert_term($brand_name, $attribute_name);
+         }
+         
+         // Ensure brand is linked to the product
+         if (!is_wp_error($brand_term)) {
+             wp_set_object_terms($product->get_id(), (int) $brand_term['term_id'], $attribute_name);
+         }
     }
 
     private function set_product_image($product, $image_url) {
