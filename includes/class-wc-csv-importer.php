@@ -147,11 +147,12 @@ class WC_CSV_Importer {
         $header = array_shift($csv_data);
         $offset = get_option('wc_csv_import_offset', 0);
         $batch = array_slice($csv_data, $offset, BATCH_SIZE);
-        wp_send_json(["success" => true, "batch" => $batch]);
-        wp_die();
+        
 
         $handler = new WC_CSV_Product_Handler();
         $result = $handler->import_products($batch, $header);
+        wp_send_json(["success" => true, "result" => $result]);
+        wp_die();
         
         $insert_count += $result['insert_count'];
         $update_count += $result['update_count'];

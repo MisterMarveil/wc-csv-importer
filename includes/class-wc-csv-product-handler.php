@@ -25,7 +25,7 @@ class WC_CSV_Product_Handler {
         
             $last_modification = strtotime($product_data['date_of_last_modification']);
             $current_time = time();
-            
+            return $product_data;
             // Vérifier si le produit existe déjà
             $product_id = wc_get_product_id_by_sku($sku);
             if ($product_id) {
