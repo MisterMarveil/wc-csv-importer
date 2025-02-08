@@ -77,8 +77,17 @@ function wc_csv_cron_import() {
         wp_die('HTTP error while downloading CSV: ' . wp_remote_retrieve_response_message($response));
     }
 
+
+     $fileContentArray = file($csv_file);        
+    $separators = array();
+    for($i = 0; $i < count($fileContentArray); $i++) {
+        $separators[] = ";";
+    }
+    $csv_data = array_map('str_getcsv', $fileContentArray, $separators);
+    $header = array_shift($csv_data);
+
     $handler = new WC_CSV_Product_Handler();
-    $handler->import_products($csv_file);
+    $handler->import_products($csv_data, $header);
     unlink($csv_file);
 
     $end = new \DateTime();
