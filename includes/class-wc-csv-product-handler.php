@@ -18,9 +18,9 @@ class WC_CSV_Product_Handler {
                 continue;
             }
 
-            return $row;
-            $product_data = array_combine($header, $row);
             
+            $product_data = array_combine($header, $row);
+            return $product_data;
             $sku = $product_data['sku'];
         
             $last_modification = strtotime($product_data['date_of_last_modification']);
