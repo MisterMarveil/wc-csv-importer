@@ -183,7 +183,7 @@ class WC_CSV_Product_Handler {
     }
 
     private function set_product_brand($product_id, $brand_name) {
-        $attribute_name = 'pa_brand';
+        $attribute_name = 'product_brand';
         
         if (!taxonomy_exists($attribute_name)) {
             register_taxonomy($attribute_name, 'product', [
