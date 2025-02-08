@@ -3,7 +3,6 @@
 
 class WC_CSV_Product_Handler {
     public function import_products($batch, $header) {
-        return $batch;
         $insertionCount = 0;
         $updateCount = 0;
         $badCount = 0;
@@ -19,6 +18,7 @@ class WC_CSV_Product_Handler {
                 continue;
             }
 
+            return $row;
             $product_data = array_combine($header, $row);
             
             $sku = $product_data['sku'];
