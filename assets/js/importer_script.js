@@ -2,7 +2,9 @@ jQuery(document).ready(function($) {
     let filePath = '';
     let totalRows = 0;   
     let offset = 80;
-    let batchSize = 10;
+    let maxRetries = 3;
+    let retryCount = 0;
+
     $("#import-progress").percircle();
     
     $('#start-import').click(function() {
@@ -61,10 +63,26 @@ jQuery(document).ready(function($) {
                 }
                 
                 offset = response.next_offset;
+                retryCount = 0;
                 $('#import-progress').css('width', (offset / totalRows * 100) + '%');
                 processBatch(response.insertCount, response.updateCount);
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                console.error("Import Failed:", textStatus, errorThrown);
+                
+                if (xhr.status === 504 && retryCount < maxRetries) {
+                    retryCount++;
+                    console.log(`Retrying import (${retryCount}/${maxRetries})...`);
+                    setTimeout(startImport, 3000); // Wait 3 seconds before retrying
+                } else {
+                    alert("L'importation a échoué après plusieurs tentatives.");
+                }
             }
         });
+    }
+
+    function startImport() {        
+        $('#start-import').trigger('click');
     }
 });
 
