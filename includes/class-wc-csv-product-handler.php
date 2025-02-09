@@ -30,11 +30,11 @@ class WC_CSV_Product_Handler {
             if ($product_id) {
                 // Vérifier si la modification est récente
                 if (($current_time - $last_modification) <= TIME_TO_CHECK) {
-                    return $this->import_product($product_data, true, $product_id);   
+                    $this->import_product($product_data, true, $product_id);   
                     $updateCount++;                 
                 }
             } else {
-                return $this->import_product($product_data);
+                $this->import_product($product_data);
                 $insertionCount++;
             }
         }
@@ -76,7 +76,7 @@ class WC_CSV_Product_Handler {
         
         // Assign brand
         if (!empty($data['brand'])) {
-            return $brand_ids = $this->create_and_assign_brand_with_hierarchy($data['brand'], explode("|", $data["brand_hierarchy"]));
+            $brand_ids = $this->create_and_assign_brand_with_hierarchy($data['brand'], explode("|", $data["brand_hierarchy"]));
 
             if(count($brand_ids))
 		        wp_set_object_terms( $product->get_id(), $brand_ids, 'product_brand' );
