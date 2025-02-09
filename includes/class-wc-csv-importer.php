@@ -22,7 +22,7 @@ class WC_CSV_Importer {
 
         wp_register_script( 'ajax-importer-script', plugins_url( 'wc-csv-importer/assets/js/importer_script.js'), array ('percircle-script')  );
         $values_array = array(
-            'offset' => get_option(PRODUCT_OFFSET_OPTION, 0),
+            'offset' => get_option(PRODUCT_OFFSET_OPTION, 1),
             'file' => get_option(PRODUCT_FILE_OPTION, '/var/www/clients/client0/web1/tmp/data.csv')
         );
         wp_localize_script( 'ajax-importer-script', 'CSV', $values_array );
@@ -162,6 +162,7 @@ class WC_CSV_Importer {
         if ($progress >= $rowCount) {
             $now = new \DateTime();
             update_option(LAST_CRON_TIME_OPTION, $now->getTimestamp());
+            update_option(PRODUCT_OFFSET_OPTION, 0);
         
             $csv_file = get_option('wc_csv_import_file', '');        
             if(is_file($csv_file))
@@ -247,7 +248,7 @@ class WC_CSV_Importer {
         $wpdb->query("ALTER TABLE {$wpdb->term_taxonomy} AUTO_INCREMENT = 1");
 
          update_option(INSERTION_COUNT_OPTION,0);
-        update_option(PRODUCT_OFFSET_OPTION,0);
+        update_option(PRODUCT_OFFSET_OPTION,1);
         update_option(UPDATE_COUNT_OPTION,0);
         
         wp_redirect(admin_url('admin.php?page=wc_csv_importer&reset_success=1'));

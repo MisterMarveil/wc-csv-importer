@@ -34,7 +34,13 @@ class WC_CSV_Product_Handler {
                     $updateCount++;                 
                 }
             } else {
-                $this->import_product($product_data);
+
+                // Integrate variations
+                if (!empty($data['variations_info_xml'])) {
+                    $this->import_product($product_data, false, false, true);
+                }else{
+                    $this->import_product($product_data);
+                }
                 $insertionCount++;
             }
         }
@@ -42,7 +48,7 @@ class WC_CSV_Product_Handler {
         return ["insert_count" => $insertionCount, "update_count" => $updateCount];
     }
 
-    private function import_product($data, $update = false, $product_id = false) {
+    private function import_product($data, $update = false, $product_id = false, $isVariable = false) {
         if($update){
             if (!$product_id) {
                 wp_die(__('besoin d\'un product id pour la mise à jour. aucun fourni.'));
@@ -51,10 +57,9 @@ class WC_CSV_Product_Handler {
             $product = wc_get_product($product_id);           
             $this->remove_old_images($product_id);
         }else{
-            $product = new WC_Product_Simple();            
+            $product = $isVariable ? new WC_Product_Variable() : new WC_Product_Simple();            
         }
  
-        
         $product->set_name($data['name']);
         $product->set_sku($data['sku']);
         $product->set_short_description($data['description']); // Short description
@@ -63,7 +68,6 @@ class WC_CSV_Product_Handler {
         $product->set_manage_stock(true);
         $product->set_stock_quantity($data['available_stock']);
         $product->set_stock_status($data['stock_status']);
-       
         
         // Assign categories
         if (!empty($data['main_category'])) {
@@ -119,8 +123,7 @@ class WC_CSV_Product_Handler {
             update_post_meta($product->get_id(), '_ean_code', $data['barcode_info_xml']);
         }
        
-        // Integrate variations
-        if (!empty($data['variations_info_xml'])) {
+        if($isVariable){
             $this->process_variations($product->get_id(), $data['variations_info_xml']);
         }
         
@@ -129,6 +132,63 @@ class WC_CSV_Product_Handler {
             update_post_meta($product->get_id(), '_translations', $data['translations_xml']);
         }        
     }
+
+    private function process_variations($product_id, $variations_xml) {
+        $xml = simplexml_load_string($variations_xml);
+        if (!$xml) {
+            return;
+        }
+
+        $attributes = [];
+        $variations = [];
+        foreach ($xml->variant as $variant) {
+            $variation = new WC_Product_Variation();
+            $variation->set_parent_id($product_id);
+            
+            $sku = (string) $variant->item_group_id;
+            $variation->set_sku($sku);
+            $variation->set_regular_price((string) $variant->price);
+            $variation->set_manage_stock(true);
+            $variation->set_stock_quantity((int) $variant->available_stock);
+            $variation->set_stock_status((string) $variant->stock_status);
+
+            $var_attributes = [];
+            for ($i = 1; $i <= 2; $i++) {
+                $var_groupname = (string) $variant->{'var_groupname_' . $i};
+                $var_name = (string) $variant->{'var_name_' . $i};
+                $var_value = (string) $variant->{'var_value_' . $i};
+                
+                if (!empty($var_groupname) && !empty($var_name) && !empty($var_value)) {
+                    $attributes[$var_name] = $var_groupname;
+                    $var_attributes[$var_name] = $var_value;
+                }
+            }
+            
+            $variation->set_attributes($var_attributes);
+            $variation->save();
+            $variations[] = $variation;
+        }
+        
+        // Assign attributes to the parent variable product
+        $product = wc_get_product($product_id);
+        $product->set_attributes($this->prepare_variation_attributes($attributes));
+        $product->save();
+    }
+
+    private function prepare_variation_attributes($attributes) {
+        $product_attributes = [];
+        foreach ($attributes as $name => $groupname) {
+            $product_attributes[$name] = [
+                'name'         => $groupname,
+                'value'        => '',
+                'is_visible'   => 1,
+                'is_variation' => 1,
+                'is_taxonomy'  => 0,
+            ];
+        }
+        return $product_attributes;
+    }
+
 
     private function remove_old_images($product_id) {
         // Get the main image ID
@@ -154,6 +214,7 @@ class WC_CSV_Product_Handler {
         }
     }
 
+    /*
     private function process_variations($product_id, $variations_xml) {
         $xml = simplexml_load_string($variations_xml);
         if (!$xml) {
@@ -181,8 +242,7 @@ class WC_CSV_Product_Handler {
             $variation->set_attributes($attributes);
             $variation->save();
         }
-    }   
-
+    }   */
 
     private function create_and_assign_categories($category_string) {
         $categories = explode('|', $category_string);
