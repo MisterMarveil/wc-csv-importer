@@ -76,7 +76,7 @@ class WC_CSV_Product_Handler {
         
         // Assign brand
         if (!empty($data['brand'])) {
-            $this->set_product_brand($product->get_id(), $data['brand']);
+            $this->create_and_assign_brand_with_hierarchy($product->get_id(), $data['brand'], explode("|", $data["brand_hierarchy"]));
         }
         
          // Assign EAN code
@@ -197,29 +197,86 @@ class WC_CSV_Product_Handler {
 
         return $category_ids;
     }
-
-    private function set_product_brand($product_id, $brand_name) {
-        $attribute_name = 'product_brand';
+    
+    /**
+     * Function to create a brand (with hierarchy) and assign it to a product programmatically.
+     *
+     * @param int    $product_id The ID of the product.
+     * @param string $brand_name The name of the brand.
+     * @param array  $brand_hierarchy (Optional) Array of parent brands in hierarchical order.
+     *                                Example: ['Grand Parent Brand', 'parent Brand'].
+     */
+    private function create_and_assign_brand_with_hierarchy( $product_id, $brand_name, $brand_hierarchy = []) {
         
-        if (!taxonomy_exists($attribute_name)) {
-            register_taxonomy($attribute_name, 'product', [
-                'label' => __('Brand', 'woocommerce'),
-                'rewrite' => false,
-                'hierarchical' => false,
-            ]);        
+        // Initialize parent term ID
+        $parent_term_id = 0;
+    
+        // Process parent brands in hierarchy
+        foreach ( $brand_hierarchy as $parent_brand_name ) {
+            // Check if the parent brand already exists
+            $parent_term = get_term_by( 'name', $parent_brand_name, 'product_brand' );
+    
+            if ( ! $parent_term ) {                
+                // Create the parent brand if it doesn't exist
+                $parent_term_data = wp_insert_term(
+                    $parent_brand_name,
+                    'product_brand',
+                    [
+                        'parent' => $parent_term_id, // Link to the previous parent in the hierarchy
+                        "slug" => $this->slugify($parent_brand_name),
+                    ]
+                );
+    
+                if ( is_wp_error( $parent_term_data ) ) {
+                    $error = "Error creating parent brand '{$parent_brand_name}': " . $parent_term_data->get_error_message();
+                    error_log($error);
+                    wp_die( $error );
+                }
+    
+                // Get the newly created parent's term ID
+                $parent_term_id = $parent_term_data['term_id'];
+            } else {
+                // If the parent brand exists, use its term ID
+                $parent_term_id = $parent_term->term_id;
+            }
         }
-        
-         // Check if the brand exists, if not create it
-         $brand_term = term_exists($brand_name, $attribute_name);
-         if (!$brand_term) {
-             $brand_term = wp_insert_term($brand_name, $attribute_name);
-         }
-         
-         // Ensure brand is linked to the product
-         if (!is_wp_error($brand_term)) {
-             wp_set_object_terms($product_id, (int) $brand_term['term_id'], $attribute_name);
-         }
+    
+        // Check if the main brand already exists
+        $brand_term = get_term_by( 'name', $brand_name, 'product_brand' );
+    
+        if ( ! $brand_term ) {
+            // Create the main brand if it doesn't exist
+            $args = [
+                "slug" => $this->slugify($brand_name),
+                'parent'      => $parent_term_id, // Link to the last parent in the hierarchy
+            ];
+    
+            $brand_term_data = wp_insert_term( $brand_name, 'product_brand', $args );
+    
+            if ( is_wp_error( $brand_term_data ) ) {
+                $error =  "Error creating brand '{$brand_name}': " . $brand_term_data->get_error_message() ;
+                error_log($error);
+                wp_die($error);
+            }
+    
+            // Get the newly created brand's term ID
+            $term_id = $brand_term_data['term_id'];
+        } else {
+            // If the brand already exists, use its term ID
+            $term_id = $brand_term->term_id;
+        }
+    
+        // Assign the brand to the product
+        if ( isset( $term_id ) && ! empty( $term_id ) ) {
+            // Append the term to avoid overwriting existing terms
+            wp_set_object_terms( $product_id, [ $term_id ], 'product_brand', true );
+            
+            error_log( "Brand '{$brand_name}' successfully assigned to product ID {$product_id}." );
+        } else {
+            error_log( "Failed to assign brand '{$brand_name}' to product ID {$product_id}." );
+        }
     }
+
 
     private function set_product_image($product, $image_url) {
         $attachment_id = media_sideload_image($image_url, 0, '', 'id');
@@ -237,5 +294,32 @@ class WC_CSV_Product_Handler {
             }
         }
         $product->set_gallery_image_ids($gallery_ids);
+    }
+
+    private function slugify($text, string $divider = '-')
+    {
+        // replace non letter or digits by divider
+        $text = preg_replace('~[^\pL\d]+~u', $divider, $text);
+
+        // transliterate
+        $text = iconv('utf-8', 'us-ascii//TRANSLIT', $text);
+
+        // remove unwanted characters
+        $text = preg_replace('~[^-\w]+~', '', $text);
+
+        // trim
+        $text = trim($text, $divider);
+
+        // remove duplicate divider
+        $text = preg_replace('~-+~', $divider, $text);
+
+        // lowercase
+        $text = strtolower($text);
+
+        if (empty($text)) {
+            return 'n-a';
+        }
+
+        return $text;
     }
 }

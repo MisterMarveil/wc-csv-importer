@@ -151,11 +151,6 @@ class WC_CSV_Importer {
 
         $handler = new WC_CSV_Product_Handler();
         $result = $handler->import_products($batch, $header);
-        //wp_send_json(["success" => true, "result" => $result]);
-        //wp_die();
-        
-        $insert_count += $result['insert_count'];
-        $update_count += $result['update_count'];
         $rowCount = count($csv_data);
         
 
@@ -164,8 +159,6 @@ class WC_CSV_Importer {
 
         if ($progress >= $rowCount) {
             $now = new \DateTime();
-            update_option(INSERTION_COUNT_OPTION, $insert_count);
-            update_option(UPDATE_COUNT_OPTION, $update_count);
             update_option(LAST_CRON_TIME_OPTION, $now->getTimestamp());
         
             $csv_file = get_option('wc_csv_import_file', '');        
@@ -179,8 +172,6 @@ class WC_CSV_Importer {
             'completed' => false,
             'next_offset' => $progress,
             'total_rows' => $rowCount,
-            'insert_count' => $insert_count,
-            'update_count' => $update_count,
         ]);
         wp_die();
     }
