@@ -76,7 +76,10 @@ class WC_CSV_Product_Handler {
         
         // Assign brand
         if (!empty($data['brand'])) {
-            $this->create_and_assign_brand_with_hierarchy($product->get_id(), $data['brand'], explode("|", $data["brand_hierarchy"]));
+            $brand_ids = $this->create_and_assign_brand_with_hierarchy($data['brand'], explode("|", $data["brand_hierarchy"]));
+
+            if(count($brand_ids))
+		        wp_set_object_terms( $product->get_id(), $brand_ids, 'product_brand' );
         }
         
          // Assign EAN code
@@ -199,14 +202,13 @@ class WC_CSV_Product_Handler {
     }
     
     /**
-     * Function to create a brand (with hierarchy) and assign it to a product programmatically.
+     * Function to create a brand (with hierarchy) and return an id array.
      *
-     * @param int    $product_id The ID of the product.
      * @param string $brand_name The name of the brand.
      * @param array  $brand_hierarchy (Optional) Array of parent brands in hierarchical order.
      *                                Example: ['Grand Parent Brand', 'parent Brand'].
      */
-    private function create_and_assign_brand_with_hierarchy( $product_id, $brand_name, $brand_hierarchy = []) {
+    private function create_and_assign_brand_with_hierarchy($brand_name, $brand_hierarchy = []) {
         
         // Initialize parent term ID
         $parent_term_id = 0;
@@ -267,15 +269,7 @@ class WC_CSV_Product_Handler {
             $term_id = $brand_term->term_id;
         }
     
-        // Assign the brand to the product
-        if ( isset( $term_id ) && ! empty( $term_id ) ) {
-            // Append the term to avoid overwriting existing terms
-            wp_set_object_terms( $product_id, [ $term_id ], 'product_brand', true );
-            
-            error_log( "Brand '{$brand_name}' successfully assigned to product ID {$product_id}." );
-        } else {
-            error_log( "Failed to assign brand '{$brand_name}' to product ID {$product_id}." );
-        }
+       return [$term_id];
     }
 
 
