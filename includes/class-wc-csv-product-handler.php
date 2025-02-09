@@ -30,11 +30,11 @@ class WC_CSV_Product_Handler {
             if ($product_id) {
                 // Vérifier si la modification est récente
                 if (($current_time - $last_modification) <= TIME_TO_CHECK) {
-                    $this->import_product($product_data, true, $product_id);   
+                    return $this->import_product($product_data, true, $product_id);   
                     $updateCount++;                 
                 }
             } else {
-                $this->import_product($product_data);
+                return $this->import_product($product_data);
                 $insertionCount++;
             }
         }
@@ -78,8 +78,10 @@ class WC_CSV_Product_Handler {
         if (!empty($data['brand'])) {
             $brand_ids = $this->create_and_assign_brand_with_hierarchy($data['brand'], explode("|", $data["brand_hierarchy"]));
 
-            if(count($brand_ids))
-		        wp_set_object_terms( $product->get_id(), $brand_ids, 'product_brand' );
+            if(count($brand_ids)){
+		        return wp_set_object_terms( $product->get_id(), $brand_ids, 'product_brand' );
+            }
+            return false;
         }
         
          // Assign EAN code
