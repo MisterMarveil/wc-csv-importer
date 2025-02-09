@@ -237,7 +237,6 @@ class WC_CSV_Importer {
         $category_taxonomy = 'product_cat';
         $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->term_taxonomy} WHERE taxonomy = %s", $category_taxonomy));
         $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->terms} WHERE term_id NOT IN (SELECT term_id FROM {$wpdb->term_taxonomy})"));
-       
                
        
         // Reset Auto Increment
@@ -248,7 +247,7 @@ class WC_CSV_Importer {
         $wpdb->query("ALTER TABLE {$wpdb->term_taxonomy} AUTO_INCREMENT = 1");
 
          update_option(INSERTION_COUNT_OPTION,0);
-        update_option(PRODUCT_OFFSET_OPTION,1);
+        update_option(PRODUCT_OFFSET_OPTION,0);
         update_option(UPDATE_COUNT_OPTION,0);
         
         wp_redirect(admin_url('admin.php?page=wc_csv_importer&reset_success=1'));
