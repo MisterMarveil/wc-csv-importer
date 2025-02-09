@@ -151,6 +151,8 @@ class WC_CSV_Importer {
 
         $handler = new WC_CSV_Product_Handler();
         $result = $handler->import_products($batch, $header);
+        wp_send_json(array("success" => true, "result"=> $result));
+        wp_die();
         $rowCount = count($csv_data);
         
 

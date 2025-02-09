@@ -76,7 +76,7 @@ class WC_CSV_Product_Handler {
         
         // Assign brand
         if (!empty($data['brand'])) {
-            $brand_ids = $this->create_and_assign_brand_with_hierarchy($data['brand'], explode("|", $data["brand_hierarchy"]));
+            return $brand_ids = $this->create_and_assign_brand_with_hierarchy($data['brand'], explode("|", $data["brand_hierarchy"]));
 
             if(count($brand_ids))
 		        wp_set_object_terms( $product->get_id(), $brand_ids, 'product_brand' );
