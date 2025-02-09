@@ -214,7 +214,8 @@ class WC_CSV_Product_Handler {
         // Process parent brands in hierarchy
         foreach ( $brand_hierarchy as $parent_brand_name ) {
             // Check if the parent brand already exists
-            $parent_term = get_term_by( 'name', $parent_brand_name, 'product_brand' );
+            $parent_term = get_term_by( 'name', $parent_brand_name, 'pa_brand' );
+            //$parent_term = get_term_by( 'name', $parent_brand_name, 'product_brand' );
     
             if ( ! $parent_term ) {                
                 // Create the parent brand if it doesn't exist
