@@ -269,7 +269,7 @@ class WC_CSV_Product_Handler {
             $term_id = $brand_term->term_id;
         }
     
-       return [$term_id];
+       return [intval($term_id)];
     }
 
 
