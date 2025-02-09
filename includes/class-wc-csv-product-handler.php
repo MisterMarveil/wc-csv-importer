@@ -30,11 +30,11 @@ class WC_CSV_Product_Handler {
             if ($product_id) {
                 // Vérifier si la modification est récente
                 if (($current_time - $last_modification) <= TIME_TO_CHECK) {
-                    return $this->import_product($product_data, true, $product_id);   
+                    $this->import_product($product_data, true, $product_id);   
                     $updateCount++;                 
                 }
             } else {
-                return $this->import_product($product_data);
+                $this->import_product($product_data);
                 $insertionCount++;
             }
         }
@@ -63,10 +63,7 @@ class WC_CSV_Product_Handler {
         $product->set_manage_stock(true);
         $product->set_stock_quantity($data['available_stock']);
         $product->set_stock_status($data['stock_status']);
-         
-        
-        // Assign purchase price
-        update_post_meta($product->get_id(), '_purchase_price', $data['dealer_price']);
+       
         
         // Assign categories
         if (!empty($data['main_category'])) {
@@ -74,14 +71,26 @@ class WC_CSV_Product_Handler {
             $product->set_category_ids($category_ids);
         }
         
+        // Set images
+        if (!empty($data['main_image_url'])) {
+            $this->set_product_image($product, $data['main_image_url']);
+        }
+        if (!empty($data['images_csv'])) {
+            $this->set_product_gallery($product, explode('|', $data['images_csv']));
+        }
+
+        $product->save();
+
+        // Assign purchase price
+        update_post_meta($product->get_id(), '_purchase_price', $data['dealer_price']);
+        
         // Assign brand
         if (!empty($data['brand'])) {
             $brand_ids = $this->create_and_assign_brand_with_hierarchy($data['brand'], explode("|", $data["brand_hierarchy"]));
 
             if(count($brand_ids)){
-		        return wp_set_object_terms( $product->get_id(), $brand_ids, 'product_brand' );
-            }
-            return false;
+		        wp_set_object_terms( $product->get_id(), $brand_ids, 'product_brand' );
+            }            
         }
         
          // Assign EAN code
@@ -99,15 +108,16 @@ class WC_CSV_Product_Handler {
             update_post_meta($product->get_id(), '_shipping_costs', $data['shipping_costs']);
         }
         
+        
+            // Assign shipping costs
+         if (!empty($data['hs_intrastat_code'])) {
+            update_post_meta($product->get_id(), '_hs_intrastat_code', $data['hs_intrastat_code']);
+        }
+        
         // Assign barcodes
         if (!empty($data['barcode_info_xml'])) {
             update_post_meta($product->get_id(), '_ean_code', $data['barcode_info_xml']);
         }
-        
-        
-        // Map shipping & customs information
-        update_post_meta($product->get_id(), '_hs_intrastat_code', $data['hs_intrastat_code']);
-        update_post_meta($product->get_id(), '_shipping_costs', $data['shipping_costs']);
        
         // Integrate variations
         if (!empty($data['variations_info_xml'])) {
@@ -117,19 +127,7 @@ class WC_CSV_Product_Handler {
         // Multi-language support
         if (!empty($data['translations_xml'])) {
             update_post_meta($product->get_id(), '_translations', $data['translations_xml']);
-        }
-        
-
-        // Set images
-        if (!empty($data['main_image_url'])) {
-            $this->set_product_image($product, $data['main_image_url']);
-        }
-        if (!empty($data['images_csv'])) {
-            $this->set_product_gallery($product, explode('|', $data['images_csv']));
-        }
-
-        $product->save();
-        
+        }        
     }
 
     private function remove_old_images($product_id) {
