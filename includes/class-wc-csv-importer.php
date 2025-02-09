@@ -190,7 +190,7 @@ class WC_CSV_Importer {
         exit;
     }
 
-    public function reset_database() {
+    public function reset_woocommerce_data() {
         global $wpdb;
 
         // Get all product IDs
