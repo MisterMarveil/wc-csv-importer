@@ -190,29 +190,65 @@ class WC_CSV_Importer {
         exit;
     }
 
-    public function reset_woocommerce_data() {
-        if (!current_user_can('manage_options')) {
-            wp_die(__('Vous n’avez pas la permission d’effectuer cette action.'));
-        }
-
+    public function reset_database() {
         global $wpdb;
+
+        // Get all product IDs
+        $product_ids = $wpdb->get_col("SELECT ID FROM {$wpdb->posts} WHERE post_type IN ('product', 'product_variation')");
         
-        // Supprimer tous les produits et leurs métadonnées
+        // Delete product images
+        foreach ($product_ids as $product_id) {
+            $thumbnail_id = get_post_meta($product_id, '_thumbnail_id', true);
+            if ($thumbnail_id) {
+                wp_delete_attachment($thumbnail_id, true);
+            }
+            
+            $gallery_ids = get_post_meta($product_id, '_product_image_gallery', true);
+            if (!empty($gallery_ids)) {
+                $gallery_ids_array = explode(',', $gallery_ids);
+                foreach ($gallery_ids_array as $image_id) {
+                    wp_delete_attachment($image_id, true);
+                }
+            }
+        }
+        
+        // Delete all products
         $wpdb->query("DELETE FROM {$wpdb->posts} WHERE post_type IN ('product', 'product_variation')");
         $wpdb->query("DELETE FROM {$wpdb->postmeta} WHERE post_id NOT IN (SELECT ID FROM {$wpdb->posts})");
-        
-        // Supprimer les termes liés aux produits (catégories, tags...)
         $wpdb->query("DELETE FROM {$wpdb->term_relationships} WHERE object_id NOT IN (SELECT ID FROM {$wpdb->posts})");
-        $wpdb->query("DELETE FROM {$wpdb->term_taxonomy} WHERE term_id NOT IN (SELECT term_id FROM {$wpdb->terms})");
-        $wpdb->query("DELETE FROM {$wpdb->terms} WHERE term_id NOT IN (SELECT term_id FROM {$wpdb->term_taxonomy})");
         
-        // Supprimer toutes les images associées aux produits
-        $attachments = get_posts([ 'post_type' => 'attachment', 'numberposts' => -1 ]);
-        foreach ($attachments as $attachment) {
-            wp_delete_attachment($attachment->ID, true);
+        
+        // Delete all brands
+        $brand_taxonomy = 'product_brand';
+        if (taxonomy_exists($brand_taxonomy)) {
+            $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->term_taxonomy} WHERE taxonomy = %s", $brand_taxonomy));
+            $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->terms} WHERE term_id NOT IN (SELECT term_id FROM {$wpdb->term_taxonomy})"));
+        }
+
+        $brand_taxonomy = 'pa_brand';
+        if (taxonomy_exists($brand_taxonomy)) {
+            $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->term_taxonomy} WHERE taxonomy = %s", $brand_taxonomy));
+            $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->terms} WHERE term_id NOT IN (SELECT term_id FROM {$wpdb->term_taxonomy})"));
         }
         
+        // Delete all product categories
+        $category_taxonomy = 'product_cat';
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->term_taxonomy} WHERE taxonomy = %s", $category_taxonomy));
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->terms} WHERE term_id NOT IN (SELECT term_id FROM {$wpdb->term_taxonomy})"));
+       
+               
+       
+        // Reset Auto Increment
+        $wpdb->query("ALTER TABLE {$wpdb->posts} AUTO_INCREMENT = 1");
+        $wpdb->query("ALTER TABLE {$wpdb->postmeta} AUTO_INCREMENT = 1");
+        $wpdb->query("ALTER TABLE {$wpdb->term_relationships} AUTO_INCREMENT = 1");
+        $wpdb->query("ALTER TABLE {$wpdb->terms} AUTO_INCREMENT = 1");
+        $wpdb->query("ALTER TABLE {$wpdb->term_taxonomy} AUTO_INCREMENT = 1");
+
+         update_option(INSERTION_COUNT_OPTION,0);
+        update_option(PRODUCT_OFFSET_OPTION,1);
+        update_option(UPDATE_COUNT_OPTION,0);
+        
         wp_redirect(admin_url('admin.php?page=wc_csv_importer&reset_success=1'));
-        exit;
     }
 }
