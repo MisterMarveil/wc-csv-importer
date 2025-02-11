@@ -173,6 +173,8 @@ class WC_CSV_Product_Handler {
     }
 
     private function import_product($data, $update = false, $product_id = false, $isVariable = false) {
+        wp_send_json(["product" => $data]);
+        wp_die();
         if($update){
             if (!$product_id) {
                 wp_die(__('besoin d\'un product id pour la mise à jour. aucun fourni.'));
