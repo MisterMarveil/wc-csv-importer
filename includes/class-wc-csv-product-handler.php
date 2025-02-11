@@ -190,10 +190,6 @@ class WC_CSV_Product_Handler {
         $product->set_short_description($data['description']); // Short description
         $product->set_description($data['html_description']); // Long description
         $product->set_regular_price($data['recommended_sale_price']);
-        
-        $product->set_min_purchase_quantity($data['minimum_units_per_order']);
-        wp_send_json(array("success" => true, "result" => $data, "product"=>$product));
-        wp_die();
         $product->set_manage_stock(true);
         $product->set_stock_quantity($data['available_stock']);
         $product->set_stock_status($data['stock_status']);
@@ -261,7 +257,13 @@ class WC_CSV_Product_Handler {
         // Multi-language support
         if (!empty($data['translations_xml'])) {
             update_post_meta($product->get_id(), '_translations', $data['translations_xml']);
-        }  
+        }
+        
+        // Set minimum order quantity
+        if (!empty($data['minimum_units_per_order'])) {
+            update_post_meta($product->get_id(), '_min_units_per_order', (int)$data['minimum_units_per_order']);
+        }
+        
         $product->save();      
     }
 
@@ -354,6 +356,11 @@ class WC_CSV_Product_Handler {
             // Assign barcodes
             if (!empty($product_data['barcode_info_xml'])) {
                 update_post_meta($variation->get_id(), '_ean_code', $product_data['barcode_info_xml']);
+            }
+
+            // Set minimum order quantity
+            if (!empty($product_data['minimum_units_per_order'])) {
+                update_post_meta($variation->get_id(), '_min_units_per_order', (int)$product_data['minimum_units_per_order']);
             }
 
             $variation->save();
