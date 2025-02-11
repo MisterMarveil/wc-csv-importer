@@ -86,7 +86,7 @@ class WC_CSV_Product_Handler {
 
             $product_data = array_combine($header, $row);           
             if (!empty($product_data['variations_info_xml'])) {
-                wp_send_json(array("success" => true, "result" => $product_data));
+                
                         wp_die();
                 $xml = simplexml_load_string($product_data['variations_info_xml']);
                 if ($xml && isset($xml->variant)) {
@@ -122,11 +122,11 @@ class WC_CSV_Product_Handler {
             if ($product_id) {
                 // Vérifier si la modification est récente
                 if (($current_time - $last_modification) <= TIME_TO_CHECK) {
-                    $this->import_product($product_data, true, $product_id);   
+                    return $this->import_product($product_data, true, $product_id);   
                     $updateCount++;                 
                 }
             } else{
-                $this->import_product($product_data);
+                return $this->import_product($product_data);
                 $insertionCount++;
             }
         }
@@ -184,6 +184,9 @@ class WC_CSV_Product_Handler {
             $product = $isVariable ? new WC_Product_Variable() : new WC_Product_Simple();            
         }
  
+        wp_send_json(array("success" => true, "result" => $data));
+        wp_die();
+
         $product->set_name($data['name']);
         $product->set_sku($data['sku']);
         $product->set_short_description($data['description']); // Short description
