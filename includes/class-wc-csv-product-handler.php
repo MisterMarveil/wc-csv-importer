@@ -69,9 +69,11 @@ class WC_CSV_Product_Handler {
                 }
             }
         }
-
         
+
         foreach ($batch as $row) {  
+            wp_send_json(["product" => $row]);
+        wp_die();
             //se déclenche si par exemple le caractère csv n'est pas respecté          
             if(count($header) != count($row)){
                 var_dump($header);
@@ -173,8 +175,7 @@ class WC_CSV_Product_Handler {
     }
 
     private function import_product($data, $update = false, $product_id = false, $isVariable = false) {
-        wp_send_json(["product" => $data]);
-        wp_die();
+        
         if($update){
             if (!$product_id) {
                 wp_die(__('besoin d\'un product id pour la mise à jour. aucun fourni.'));
@@ -195,8 +196,7 @@ class WC_CSV_Product_Handler {
         $product->set_manage_stock(true);
         $product->set_stock_quantity($data['available_stock']);
         $product->set_stock_status($data['stock_status']);
-        wp_send_json(["product" => $data]);
-        wp_die();
+       
         // Assign categories
         if (!empty($data['main_category'])) {
             $category_ids = $this->create_and_assign_categories($data['main_category']);
