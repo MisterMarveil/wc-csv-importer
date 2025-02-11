@@ -86,6 +86,8 @@ class WC_CSV_Product_Handler {
 
             $product_data = array_combine($header, $row);           
             if (!empty($product_data['variations_info_xml'])) {
+                wp_send_json(array("success" => true, "result" => $product_data));
+                        wp_die();
                 $xml = simplexml_load_string($product_data['variations_info_xml']);
                 if ($xml && isset($xml->variant)) {
                     foreach ($xml->variant as $variant) {
@@ -99,8 +101,7 @@ class WC_CSV_Product_Handler {
                         }
                         
                         $parent_id = wc_get_product_id_by_sku($group_id);
-                        wp_send_json(array("success" => true, "parent_id" => $parent_id));
-                        wp_die();
+                        
 
                         if ($parent_id) {
                             $this->import_variation($parent_id, $product_data);
