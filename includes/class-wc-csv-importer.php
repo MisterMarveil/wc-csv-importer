@@ -137,7 +137,7 @@ class WC_CSV_Importer {
         
         $separators = array();
         for($i = 0; $i < count($fileContentArray); $i++) {
-            $separators[] = ";";
+            $separators[] = CSV_SEPARATOR;
         }        
         return  array_map('str_getcsv', $fileContentArray, $separators);
     }

@@ -19,6 +19,7 @@ define('UPDATE_COUNT_OPTION', 'wc_csv_import_last_update_count');
 define('LAST_CRON_TIME_OPTION', 'wc_csv_import_last_cron_timestamp');
 define('INVALID_ENTITY_COUNT_OPTION', 'wc_csv_import_last_bad_entity');
 define('PRODUCT_OFFSET_OPTION', 'wc_csv_import_offset');
+define('CSV_SEPARATOR', ';');
 define('PRODUCT_FILE_OPTION', 'wc_csv_import_file');
 define('CSV_URL_DEFAULT_VALUE', 'https://store.dreamlove.es/dyndata/exportaciones/csvzip/catalog_1_52_125_2_dd65d46c9efc3d9364272c55399d5b56_csv_plain.csv');
 define('CSV_FILE_DEFAULT_VALUE', '/var/www/clients/client0/web1/tmp/data.csv');
