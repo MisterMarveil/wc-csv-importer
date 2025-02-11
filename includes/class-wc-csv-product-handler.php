@@ -70,7 +70,7 @@ class WC_CSV_Product_Handler {
             }
         }
 
-
+        wp_send_json(array("success" => true));
 
         foreach ($batch as $row) {  
             //se déclenche si par exemple le caractère csv n'est pas respecté          
