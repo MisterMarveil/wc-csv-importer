@@ -70,8 +70,7 @@ class WC_CSV_Product_Handler {
             }
         }
 
-        wp_send_json(array("success" => true));
-
+        
         foreach ($batch as $row) {  
             //se déclenche si par exemple le caractère csv n'est pas respecté          
             if(count($header) != count($row)){
@@ -100,6 +99,9 @@ class WC_CSV_Product_Handler {
                         }
                         
                         $parent_id = wc_get_product_id_by_sku($group_id);
+                        wp_send_json(array("success" => true, "parent_id" => $parent_id));
+                        wp_die();
+
                         if ($parent_id) {
                             $this->import_variation($parent_id, $product_data);
                         }
