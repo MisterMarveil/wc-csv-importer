@@ -193,7 +193,8 @@ class WC_CSV_Product_Handler {
         $product->set_manage_stock(true);
         $product->set_stock_quantity($data['available_stock']);
         $product->set_stock_status($data['stock_status']);
-        
+        wp_send_json(["product" => $data]);
+        wp_die();
         // Assign categories
         if (!empty($data['main_category'])) {
             $category_ids = $this->create_and_assign_categories($data['main_category']);
