@@ -183,9 +183,7 @@ class WC_CSV_Product_Handler {
         }else{
             $product = $isVariable ? new WC_Product_Variable() : new WC_Product_Simple();            
         }
- 
-        wp_send_json(array("success" => true, "result" => $data));
-        wp_die();
+
 
         $product->set_name($data['name']);
         $product->set_sku($data['sku']);
@@ -213,6 +211,9 @@ class WC_CSV_Product_Handler {
 
         $product->save();
 
+
+        wp_send_json(array("success" => true, "result" => $data, "product"=>$product));
+        wp_die();
         // Assign purchase price
         update_post_meta($product->get_id(), '_purchase_price', $data['dealer_price']);
         
