@@ -72,8 +72,6 @@ class WC_CSV_Product_Handler {
         
 
         foreach ($batch as $row) {  
-            wp_send_json(["product" => $row]);
-        wp_die();
             //se déclenche si par exemple le caractère csv n'est pas respecté          
             if(count($header) != count($row)){
                 var_dump($header);
