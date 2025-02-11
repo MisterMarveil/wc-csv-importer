@@ -72,8 +72,7 @@ class WC_CSV_Product_Handler {
         
 
         foreach ($batch as $row) {  
-            wp_send_json(["product" => $row]);
-        wp_die();
+            
             //se déclenche si par exemple le caractère csv n'est pas respecté          
             if(count($header) != count($row)){
                 var_dump($header);
@@ -118,7 +117,8 @@ class WC_CSV_Product_Handler {
         
             $last_modification = strtotime($product_data['date_of_last_modification']);
             $current_time = time();
-            
+            wp_send_json(["product" => $row]);
+        wp_die();
             // Vérifier si le produit existe déjà
             $product_id = wc_get_product_id_by_sku($sku);
             if ($product_id) {
