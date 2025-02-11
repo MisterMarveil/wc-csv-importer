@@ -190,6 +190,8 @@ class WC_CSV_Product_Handler {
         $product->set_short_description($data['description']); // Short description
         $product->set_description($data['html_description']); // Long description
         $product->set_regular_price($data['recommended_sale_price']);
+        wp_send_json(array("success" => true, "result" => $data, "product"=>$product));
+        wp_die();
         $product->set_min_purchase_quantity($data['minimum_units_per_order']);
         $product->set_manage_stock(true);
         $product->set_stock_quantity($data['available_stock']);
@@ -212,8 +214,7 @@ class WC_CSV_Product_Handler {
         $product->save();
 
 
-        wp_send_json(array("success" => true, "result" => $data, "product"=>$product));
-        wp_die();
+     
         // Assign purchase price
         update_post_meta($product->get_id(), '_purchase_price', $data['dealer_price']);
         
