@@ -109,7 +109,7 @@ class WC_CSV_Importer {
             update_option('wc_csv_import_url', esc_url_raw($csv_url));        
         }
 
-        $offset = get_option('wc_csv_import_offset', 0);
+        $offset = get_option('wc_csv_import_offset', 1);
 
         if($offset == 0){
             $csv_file = wp_tempnam($csv_url);
