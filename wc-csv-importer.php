@@ -14,11 +14,13 @@ if (!defined('ABSPATH')) {
 // Définir la constante TIME_TO_CHECK (en secondes)
 define('TIME_TO_CHECK', 3600);
 define('BATCH_SIZE', 10);
+define('BATCH_CATEGORY_SIZE', 50);  //pour gérer les variations, nous récupérons batch_category_size de produits, sachant que juste batch_size vont être traité par appel de la logique d'import
 define('INSERTION_COUNT_OPTION', 'wc_csv_import_last_insert_count');
 define('UPDATE_COUNT_OPTION', 'wc_csv_import_last_update_count');
 define('LAST_CRON_TIME_OPTION', 'wc_csv_import_last_cron_timestamp');
 define('INVALID_ENTITY_COUNT_OPTION', 'wc_csv_import_last_bad_entity');
 define('PRODUCT_OFFSET_OPTION', 'wc_csv_import_offset');
+define('PRODUCT_TOTAL_ROWS_COUNT', 'wc_csv_line_count');
 define('CSV_SEPARATOR', ';');
 define('PRODUCT_FILE_OPTION', 'wc_csv_import_file');
 define('CSV_URL_DEFAULT_VALUE', 'https://store.dreamlove.es/dyndata/exportaciones/csvzip/catalog_1_52_125_2_dd65d46c9efc3d9364272c55399d5b56_csv_plain.csv');
@@ -64,7 +66,7 @@ function wc_csv_cron_import() {
 
     $handler = new WC_CSV_Importer();
     $handler->process_csv_import();
-    $offset = get_option('wc_csv_import_offset', 0);
+    $offset = get_option(PRODUCT_OFFSET_OPTION, 0);
 
     $end = new \DateTime();
     echo 'Imported  '+($offset == 0  ? 'completed successfully' : $offset+' products') +' in '.($end->getTimestamp() - $start->getTimestamp()).'seconds';

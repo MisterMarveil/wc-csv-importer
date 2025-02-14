@@ -2,116 +2,111 @@
 <?php
 
 class WC_CSV_Product_Handler {
-    public function import_products($batch, $header) {
-        $insertionCount = 0;
-        $updateCount = 0;
-        $badCount = 0;
-        $variation_groups = [];
-        $processed_variable_products = [];
+    private static $instance = null;
+    private static $lock_file = '/tmp/csv_import.lock';
 
-         // First pass: Collect variations grouped by item_group_id
-        foreach ($batch as $row) {
+    private function __construct() {}
+
+    public static function get_instance() {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
+    private function is_locked() {
+        return file_exists(self::$lock_file);
+    }
+
+    private function lock() {
+        file_put_contents(self::$lock_file, "locked");
+    }
+
+    private function unlock() {
+        if ($this->is_locked()) {
+            unlink(self::$lock_file);
+        }
+    }
+
+    public function import_products($batch, $header, $offset) {
+        if ($this->is_locked()) {
+            error_log("CSV import is already running. Aborting new import.");
+            wp_die("CSV import is already running. Aborting new import.");
+        }        
+        $this->lock();
+
+
+        $products_by_category = [];     
+        $variationSkus = []; 
+    
+        // Step 1: Group products by category
+        foreach ($batch as $row) {//batch has a size of batch_category_size
             $product_data = array_combine($header, $row);
-            if (!empty($product_data['variations_info_xml'])) {
-                $xml = simplexml_load_string($product_data['variations_info_xml']);
-                if ($xml && isset($xml->variant)) {
-                    foreach ($xml->variant as $variant) {
-                        $group_id = (string) $variant->item_group_id;
-                        if (!isset($variation_groups[$group_id])) {
-                            $variation_groups[$group_id] = [
-                                'common_names' => [],
-                                'variations' => []
-                            ];
-                        }
+            $category = $product_data['main_category'];
+            
+            if (!isset($products_by_category[$category])) {
+                $products_by_category[$category] = [];
+            }
 
-                        if(isset($variant->common_title) && !empty($variant->common_title)){
-                            $variation_groups[$group_id]['common_names'][] = (string) $variant->common_title;
-                        }else if (!empty($product_data['name'])) {
-                            $variation_groups[$group_id]['common_names'][] = $product_data['name'];
+            $products_by_category[$category][] = $product_data;
+        }
+
+        // Step 2: Detect Variations and Prepare Variable Products
+        foreach ($products_by_category as $category => $products) {
+            $detected_variations = $this->detect_variations($products);
+            foreach ($detected_variations as $common_name => $data) {
+                $sku_list = array_column($data['variations'], 'sku');
+                 $variable_sku = implode('.', $sku_list);
+                 $variationSkus = array_merge($variationSkus, $sku_list);
+                
+                // Check if a variable product already exists using SKU LIKE query
+                $existing_product_id = $this->find_existing_variable_product($sku_list);
+                if ($existing_product_id) {
+                    // Fetch existing concatenated SKU
+                    $existing_sku = get_post_meta($existing_product_id, '_sku', true);
+                    
+                    if ($existing_sku !== $variable_sku) {
+                        // SKU changed -> update the variable product
+                        update_post_meta($existing_product_id, '_sku', $variable_sku);
+                        
+                        // Remove existing variations
+                        $this->remove_existing_variations($existing_product_id);
+
+                        // Add new variations
+                        foreach ($data['variations'] as $variation) {
+                            $this->import_variation($existing_product_id, $variation, $common_name);
                         }
-                        
-                        // Enrich the variant with additional fields from product_data and the XML variant object
-                        /*$enriched_variant = [
-                            'variant' => $variant,
-                            'name' => (string) $product_data['name'],
-                            'sku' => (string) $product_data['sku'],
-                            'description' => (string) $product_data['description'],
-                            'html_description' => (string) $product_data['html_description'],
-                            'dealer_price' => (string) $product_data['dealer_price'],
-                            'price' => (string) $product_data['price'],
-                            'vat_percentage' => (string) $product_data['vat_percentage'],
-                            'shipping_costs' => (string) $product_data['shipping_costs'],
-                            'availability' => (string) $product_data['availability'],
-                            'there_is_stock' => (string) $product_data['there_is_stock'],
-                            'available_stock' => (string) $product_data['available_stock'],
-                            'main_category' => (string) $product_data['main_category'],
-                            'brand' => (string) $product_data['brand'],
-                            'ean' => (string) $product_data['ean'],
-                            'delivery_term' => (string) $product_data['delivery_term'],
-                            'main_image_url' => (string) $product_data['main_image_url'],
-                            'main_image_url_big' => (string) $product_data['main_image_url_big'],
-                            'minimum_units_per_order' => (string) $product_data['minimum_units_per_order'],
-                            'maximum_units_per_order' => (string) $product_data['maximum_units_per_order'],
-                            'brand_hierarchy' => (string) $product_data['brand_hierarchy'],
-                            'weight_info_xml' => (string) $product_data['weight_info_xml'],
-                            'dimensions_info_xml' => (string) $product_data['dimensions_info_xml'],
-                            'novelty_info_xml' => (string) $product_data['novelty_info_xml'],
-                            'barcode_info_xml' => (string) $product_data['barcode_info_xml'],
-                            'categories_info_xml' => (string) $product_data['categories_info_xml'],
-                            'translations_xml' => (string) $product_data['translations_xml'],
-                            'images_csv' => (string) $product_data['images_csv'],
-                            'recommended_sale_price' => (string) $product_data['recommended_sale_price'],
-                            'hs_intrastat_code' => (string) $product_data['hs_intrastat_code'],
-                        ];
-                        
-                        $variation_groups[$group_id]['variations'][] = $enriched_variant;*/
+                    }else{
+                        continue;
+                    }
+                } else {
+                    
+                    // Create new variable product                    
+                    $productId = $this->import_variable_product($variable_sku, [
+                        'name' => $common_name,                        
+                        'variations' => $data['variations']
+                    ]);
+
+                    foreach ($data['variations'] as $variation) {
+                        $this->import_variation($productId, $variation, $common_name);
                     }
                 }
             }
         }
-        
 
-        foreach ($batch as $row) {  
-            //se déclenche si par exemple le caractère csv n'est pas respecté          
-            if(count($header) != count($row)){
-                var_dump($header);
-                echo nl2br("\n--------------------------------\n");
-                var_dump($row);
-                $badCount++;
-                if($badCount == 2){
-                    wp_die("bad count: " . $badCount);
-                }
+       $csv_data = array_slice($batch, $offset, BATCH_SIZE);
+   
+       // Step 3: Import Products
+       foreach ($csv_data as $row) {
+           $product_data = array_combine($header, $row);
+           $sku = $product_data['sku'];
+
+           // Prevent duplicate insertions
+           if ($this->product_exists($sku) || in_array($sku, $variationSkus)) {
                 continue;
             }
 
-            $product_data = array_combine($header, $row);           
-            if (!empty($product_data['variations_info_xml'])) {
-                $xml = simplexml_load_string($product_data['variations_info_xml']);
-                if ($xml && isset($xml->variant)) {
-                    foreach ($xml->variant as $variant) {
-                        $group_id = (string) $variant->item_group_id;
-                        $parentProduct = null;
-                        
-                        if (!isset($processed_variable_products[$group_id])) {
-
-                            $parentProduct = $this->import_variable_product($group_id, $variation_groups[$group_id]);
-                            $processed_variable_products[$group_id] = $parentProduct;
-                        }
-                        
-                        $parent_id = wc_get_product_id_by_sku($group_id);
-                        
-
-                        if ($parent_id) {
-                            $this->import_variation($parent_id, $product_data);
-                        }
-                    }
-                }
-                continue;
-            }
-
-            
-             $sku = $product_data['sku'];
-        
+           // Vérifier si le produit a été modifié récemment
             $last_modification = strtotime($product_data['date_of_last_modification']);
             $current_time = time();
             
@@ -121,56 +116,124 @@ class WC_CSV_Product_Handler {
                 // Vérifier si la modification est récente
                 if (($current_time - $last_modification) <= TIME_TO_CHECK) {
                     $this->import_product($product_data, true, $product_id);   
-                    $updateCount++;                 
                 }
             } else{
                 $this->import_product($product_data);
-                $insertionCount++;
             }
         }
-
-        return ["insert_count" => $insertionCount, "update_count" => $updateCount];
+        
+        $this->unlock();
     }
 
-     private function find_common_string_in_array($names) {
-        if (count($names) === 1) {
-            return $names[0];
-        }
-        $common = array_shift($names);
-        foreach ($names as $name) {
-            $common = $this->find_common_string($common, $name);
-        }
-        return trim($common);
+    private function remove_existing_variations($product_id) {
+        global $wpdb;
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->posts} WHERE post_type = 'product_variation' AND post_parent = %d", $product_id));
     }
 
-    private function find_common_string($str1, $str2) {
-        $common = '';
-        $len = min(strlen($str1), strlen($str2));
-        for ($i = 0; $i < $len; $i++) {
-            if ($str1[$i] === $str2[$i]) {
-                $common .= $str1[$i];
-            } else {
-                break;
+    private function product_exists($sku) {
+        global $wpdb;
+        return (bool) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_sku' AND meta_value = %s", $sku));
+    }
+     
+    public function detect_variations($products) {
+        $variation_groups = [];
+        
+        foreach ($products as $i => $product1) {
+            foreach ($products as $j => $product2) {
+                if ($i >= $j) continue; // Avoid duplicate comparisons
+                
+                $name1 = $product1['name'];
+                $name2 = $product2['name'];
+                
+                if ($this->similarity($name1, $name2) >= 60) { // 60% Similarity threshold
+                    $common_name = $this->find_common_substring($name1, $name2);
+                    
+                    if (!empty($common_name)) {
+                        if (!isset($variation_groups[$common_name])) {
+                            $variation_groups[$common_name] = [];
+                        }
+                        
+                        $variation_groups[$common_name][] = $product1;
+                        $variation_groups[$common_name][] = $product2;
+                    }
+                }
             }
         }
-        return trim($common);
+        
+        return $variation_groups;
     }
 
-    private function import_variable_product($group_id, $variation_group) {
-        $existing_product_id = wc_get_product_id_by_sku($group_id);
+    private function similarity($str1, $str2) {
+        similar_text($str1, $str2, $percent);
+        return $percent;
+    }
+
+    private function find_common_substring($str1, $str2) {
+        $len1 = strlen($str1);
+        $len2 = strlen($str2);
+        $longest = '';
+        
+        for ($i = 0; $i < $len1; $i++) {
+            for ($j = 0; $j < $len2; $j++) {
+                $match = '';
+                
+                while ($i + strlen($match) < $len1 && $j + strlen($match) < $len2 && $str1[$i + strlen($match)] == $str2[$j + strlen($match)]) {
+                    $match .= $str1[$i + strlen($match)];
+                }
+                
+                if (strlen($match) > strlen($longest)) {
+                    $longest = $match;
+                }
+            }
+        }
+        
+        return trim($longest);
+    }
+
+    private function import_variable_product($sku, $variable_data) {
+        $existing_product_id = wc_get_product_id_by_sku($sku);
         if ($existing_product_id) {
             return wc_get_product($existing_product_id);
         }
+               
+        if (!$product_id) {
+            $product = new WC_Product_Variable();
+            $product->set_name($variable_data['name']);
+            $product->set_sku($sku);
+            
+            // Assign main image from first variation
+            if (!empty($variable_data['variations'][0]['main_image_url'])) {
+                $this->set_product_image($product, $variable_data['variations'][0]['main_image_url']);
+            }
+            
+            // Collect up to 2 gallery images from each variation
+            $gallery_images = [];
+            foreach ($variable_data['variations'] as $variation) {
+                if (!empty($variation['images_csv'])) {
+                    $images = explode('|', $variation['images_csv']);
+                    $gallery_images = array_merge($gallery_images, array_slice($images, 0, 2));
+                }
+            }
+            if (!empty($gallery_images)) {
+                $this->set_product_gallery($product, $gallery_images);
+            }
+            
+            $product->save();
+            $product_id = $product->get_id();
+        }
         
-        $product = new WC_Product_Variable();
-        $product->set_name($this->find_common_string_in_array($variation_group['common_names']));
-        $product->set_sku($group_id);
-        $product->save();
-        
-        return $product;
+        foreach ($variable_data['variations'] as $variation_data) {
+            $this->import_variation($product_id, $variation_data, $variable_data['name']);
+        }
     }
 
-    private function import_product($data, $update = false, $product_id = false, $isVariable = false) {
+    private function find_existing_variable_product($sku_list) {
+        global $wpdb;
+        $like_query = implode("%' OR meta_value LIKE '%", $sku_list);
+        return $wpdb->get_var("SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_sku' AND (meta_value LIKE '%$like_query%') LIMIT 1");
+    }
+
+    private function import_product($data, $update = false, $product_id = false) {
         
         if($update){
             if (!$product_id) {
@@ -180,7 +243,7 @@ class WC_CSV_Product_Handler {
             $product = wc_get_product($product_id);           
             $this->remove_old_images($product_id);
         }else{
-            $product = $isVariable ? new WC_Product_Variable() : new WC_Product_Simple();            
+            $product = new WC_Product_Simple();            
         }
 
 
@@ -249,10 +312,6 @@ class WC_CSV_Product_Handler {
             update_post_meta($product->get_id(), '_ean_code', $data['barcode_info_xml']);
         }
        
-        /*if($isVariable){
-            $this->process_variations($product->get_id(), $data['variations_info_xml']);
-        }*/
-        
         // Multi-language support
         if (!empty($data['translations_xml'])) {
             update_post_meta($product->get_id(), '_translations', $data['translations_xml']);
@@ -266,105 +325,105 @@ class WC_CSV_Product_Handler {
         $product->save();      
     }
 
-    private function import_variation($product_id, $product_data) {
-        $xml = simplexml_load_string($product_data['variations_info_xml']);
-        if (!$xml) {
-            return;
-        }
+    private function import_variation($product_id, $product_data, $commonName) {
+        $variation = new WC_Product_Variation();
+        $variation->set_parent_id($product_id);
+        $variation->set_sku($product_data['sku']);
+        $variation->set_name($product_data['name']);
+        $variation->set_description($product_data['html_description']);
+        $variation->set_short_description($product_data['description']);
+        $variation->set_min_purchase_quantity($product_data['minimum_units_per_order']);
+        $variation->set_regular_price((string) $product_data['recommended_sale_price']);
+        $variation->set_manage_stock(true);
+        $variation->set_stock_quantity((int) $product_data['available_stock']);
+        $variation->set_stock_status((string) $product_data['stock_status']);
 
         $attributes = [];
-        $variations = [];
-        foreach ($xml->variant as $variant) {
-            $variation = new WC_Product_Variation();
-            $variation->set_parent_id($product_id);
             
-            $sku = (string) $variant->item_group_id;
-            $variation->set_sku($product_data['sku']);
-            $variation->set_name($product_data['name']);
-            $variation->set_description($product_data['html_description']);
-            $variation->set_short_description($product_data['description']);
-            $variation->set_min_purchase_quantity($product_data['minimum_units_per_order']);
-            $variation->set_regular_price((string) $product_data['recommended_sale_price']);
-            $variation->set_manage_stock(true);
-            $variation->set_stock_quantity((int) $product_data['available_stock']);
-            $variation->set_stock_status((string) $product_data['stock_status']);
-
-            $var_attributes = [];
-            for ($i = 1; $i <= 3; $i++) {
-                $var_groupname = (string) $variant->{'var_groupname_' . $i};
-                $var_name = (string) $variant->{'var_name_' . $i};
-                $var_value = (string) $variant->{'var_value_' . $i};
-                
-                if (!empty($var_groupname) && !empty($var_name) && !empty($var_value)) {
-                    $attributes[$var_name] = $var_groupname;
-                    $var_attributes[$var_name] = $var_value;
-                }
-            }
-            
+        $xml = simplexml_load_string($product_data['variations_info_xml']);
+        if (!$xml) {
+            $var_attributes = ["précisions" => trim(str_replace($commonName, '', $product_data['name']))];           
             $variation->set_attributes($var_attributes);
-            
-            // Assign categories
-            if (!empty($product_data['main_category'])) {
-                $category_ids = $this->create_and_assign_categories($product_data['main_category']);
-                $variation->set_category_ids($category_ids);
+            $attributes = ['precisions' => "attributs"];
+        }else{
+            foreach ($xml->variant as $variant) {
+                $var_attributes = [];
+                for ($i = 1; $i <= 3; $i++) {
+                    $var_groupname = (string) $variant->{'var_groupname_' . $i};
+                    $var_name = (string) $variant->{'var_name_' . $i};
+                    $var_value = (string) $variant->{'var_value_' . $i};
+                    
+                    if (!empty($var_groupname) && !empty($var_name) && !empty($var_value)) {
+                        $attributes[$var_name] = $var_groupname;
+                        $var_attributes[$var_name] = $var_value;
+                    }
+                }
+                
+                $variation->set_attributes($var_attributes);
             }
-            
-            // Set images
-            if (!empty($product_data['main_image_url'])) {
-                $this->set_product_image($variation, $product_data['main_image_url']);
-            }
-            if (!empty($product_data['images_csv'])) {
-                $this->set_product_gallery($variation, explode('|', $product_data['images_csv']));
-            }
-
-            $variation->save();
-
-            // Assign purchase price
-            update_post_meta($variation->get_id(), '_purchase_price', $product_data['dealer_price']);
-            
-            // Assign brand
-            if (!empty($product_data['brand'])) {
-                $brand_ids = $this->create_and_assign_brand_with_hierarchy($product_data['brand'], explode("|", $product_data["brand_hierarchy"]));
-
-                if(count($brand_ids)){
-                    wp_set_object_terms( $variation->get_id(), $brand_ids, 'product_brand' );
-                }            
-            }
-            
-            // Assign EAN code
-            if (!empty($product_data['ean'])) {
-                update_post_meta($variation->get_id(), '_ean_code', $product_data['ean']);
-            }
-
-            // Assign VAT percentage
-            if (!empty($product_data['vat_percentage'])) {
-                update_post_meta($variation->get_id(), '_vat_percentage', $product_data['vat_percentage']);
-            }
-
-            // Assign shipping costs
-            if (!empty($product_data['shipping_costs'])) {
-                update_post_meta($variation->get_id(), '_shipping_costs', $product_data['shipping_costs']);
-            }
-            
-            
-                // Assign shipping costs
-            if (!empty($product_data['hs_intrastat_code'])) {
-                update_post_meta($variation->get_id(), '_hs_intrastat_code', $product_data['hs_intrastat_code']);
-            }
-            
-            // Assign barcodes
-            if (!empty($product_data['barcode_info_xml'])) {
-                update_post_meta($variation->get_id(), '_ean_code', $product_data['barcode_info_xml']);
-            }
-
-            // Set minimum order quantity
-            if (!empty($product_data['minimum_units_per_order'])) {
-                update_post_meta($variation->get_id(), '_min_units_per_order', (int)$product_data['minimum_units_per_order']);
-            }
-
-            $variation->save();
-            $variations[] = $variation;
         }
+            
+        // Assign categories
+        if (!empty($product_data['main_category'])) {
+            $category_ids = $this->create_and_assign_categories($product_data['main_category']);
+            $variation->set_category_ids($category_ids);
+        }
+            
+        // Set images
+        if (!empty($product_data['main_image_url'])) {
+            $this->set_product_image($variation, $product_data['main_image_url']);
+        }
+        if (!empty($product_data['images_csv'])) {
+            $this->set_product_gallery($variation, explode('|', $product_data['images_csv']));
+        }
+
+        $variation->save();
+
+        // Assign purchase price
+        update_post_meta($variation->get_id(), '_purchase_price', $product_data['dealer_price']);
+        
+        // Assign brand
+        if (!empty($product_data['brand'])) {
+            $brand_ids = $this->create_and_assign_brand_with_hierarchy($product_data['brand'], explode("|", $product_data["brand_hierarchy"]));
+
+            if(count($brand_ids)){
+                wp_set_object_terms( $variation->get_id(), $brand_ids, 'product_brand' );
+            }            
+        }
+        
+        // Assign EAN code
+        if (!empty($product_data['ean'])) {
+            update_post_meta($variation->get_id(), '_ean_code', $product_data['ean']);
+        }
+
+        // Assign VAT percentage
+        if (!empty($product_data['vat_percentage'])) {
+            update_post_meta($variation->get_id(), '_vat_percentage', $product_data['vat_percentage']);
+        }
+
+        // Assign shipping costs
+        if (!empty($product_data['shipping_costs'])) {
+            update_post_meta($variation->get_id(), '_shipping_costs', $product_data['shipping_costs']);
+        }
+        
+        
+            // Assign shipping costs
+        if (!empty($product_data['hs_intrastat_code'])) {
+            update_post_meta($variation->get_id(), '_hs_intrastat_code', $product_data['hs_intrastat_code']);
+        }
+        
+        // Assign barcodes
+        if (!empty($product_data['barcode_info_xml'])) {
+            update_post_meta($variation->get_id(), '_ean_code', $product_data['barcode_info_xml']);
+        }
+
+        // Set minimum order quantity
+        if (!empty($product_data['minimum_units_per_order'])) {
+            update_post_meta($variation->get_id(), '_min_units_per_order', (int)$product_data['minimum_units_per_order']);
+        }
+
+        $variation->save();
+        
         
         // Assign attributes to the parent variable product
         $product = wc_get_product($product_id);

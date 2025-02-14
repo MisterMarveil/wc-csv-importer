@@ -91,11 +91,10 @@ class WC_CSV_Importer {
     }
 
     public function initialize_csv_import() { 
-        $csv_data = $this->retrieveCsvData();       
-        $total_rows = count($csv_data) - 1; // Exclude header row
-        
+        $this->retrieveCsvData();       
+
         wp_send_json([
-            'total_rows' => $total_rows,            
+            'total_rows' => get_option(PRODUCT_TOTAL_ROWS_COUNT, 0),            
         ]);
         wp_die;
     }
@@ -134,26 +133,32 @@ class WC_CSV_Importer {
         }
     
         $fileContentArray = file($csv_file);
+        $total_rows = count($fileContentArray);
+
+        if($offset == 0) {//new file has been downloaded, maybe with new lines
+            update_option(PRODUCT_TOTAL_ROWS_COUNT, ($total_rows - 1));  //-1 we remove the headers row and save the number of rows
+        }
         
         $separators = array();
-        for($i = 0; $i < count($fileContentArray); $i++) {
+        for($i = 0; $i < $total_rows; $i++) {
             $separators[] = CSV_SEPARATOR;
         }        
         return  array_map('str_getcsv', $fileContentArray, $separators);
     }
 
-    public function process_csv_import() {        
+    public function process_csv_import() { 
+        // Retrieve and process CSV data
         $csv_data = $this->retrieveCsvData();
         $header = array_shift($csv_data);
-        $offset = get_option('wc_csv_import_offset', 0);
-        $batch = array_slice($csv_data, $offset, BATCH_SIZE);
+        $offset = get_option(PRODUCT_OFFSET_OPTION, 0);
+        $batch = array_slice($csv_data, $offset, BATCH_CATEGORY_SIZE);
         
 
-        $handler = new WC_CSV_Product_Handler();
-        $result = $handler->import_products($batch, $header);
+        $handler = WC_CSV_Product_Handler::get_instance();
+        $result = $handler->import_products($batch, $header, $offset);
         //wp_send_json(array("success" => true, "result"=> $result));
         //wp_die();
-        $rowCount = count($csv_data);
+        $rowCount = get_option(PRODUCT_TOTAL_ROWS_COUNT, 0);
         
 
         $progress = min($offset + BATCH_SIZE, $rowCount);
@@ -162,7 +167,7 @@ class WC_CSV_Importer {
         if ($progress >= $rowCount) {
             $now = new \DateTime();
             update_option(LAST_CRON_TIME_OPTION, $now->getTimestamp());
-            update_option(PRODUCT_OFFSET_OPTION, 0);
+            update_option(PRODUCT_OFFSET_OPTION, 0);         
         
             $csv_file = get_option('wc_csv_import_file', '');        
             if(is_file($csv_file))
