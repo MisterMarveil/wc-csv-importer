@@ -65,7 +65,12 @@ jQuery(document).ready(function($) {
                 offset = response.next_offset;
                 retryCount = 0;
                 $('#import-progress').css('width', (offset / totalRows * 100) + '%');
-                processBatch(response.insertCount, response.updateCount);
+                
+                if(offset && !isNaN(offset) && offset < totalRows){
+                    processBatch(response.insertCount, response.updateCount);   
+                }else{
+                    console.log('oops! bad offset provided: '+offset);
+                }
             },
             error: function (xhr, textStatus, errorThrown) {
                 console.error("Import Failed:", textStatus, errorThrown);
