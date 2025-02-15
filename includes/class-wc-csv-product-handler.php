@@ -2,17 +2,19 @@
 <?php
 
 class WC_CSV_Product_Handler {
-    private static $instance = null;
+    //private static $instance = null;
     private static $lock_file = '/tmp/csv_import.lock';
 
+    /*
     private function __construct() {}
 
+    
     public static function get_instance() {
         if (self::$instance === null) {
             self::$instance = new self();
         }
         return self::$instance;
-    }
+    }*/
 
     private function is_locked() {
         return file_exists(self::$lock_file);
@@ -22,7 +24,7 @@ class WC_CSV_Product_Handler {
         file_put_contents(self::$lock_file, "locked");
     }
 
-    private function unlock() {
+    public function unlock() {
         if ($this->is_locked()) {
             unlink(self::$lock_file);
         }

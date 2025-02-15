@@ -161,10 +161,17 @@ class WC_CSV_Importer {
         $batch = array_slice($csv_data, $offset, BATCH_CATEGORY_SIZE);
         
 
-        $handler = WC_CSV_Product_Handler::get_instance();
-        $result = $handler->import_products($batch, $header, $offset);
-        //wp_send_json(array("success" => true, "result"=> $result));
-        //wp_die();
+        $handler = new WC_CSV_Product_Handler();
+        try{
+            $result = $handler->import_products($batch, $header, $offset);
+        }catch(\Exception $e){
+            $handler->unlock();
+            wp_error("oops! something went wrong: ".$e->getMessage());
+            wp_die("oops! something went wrong: ".$e->getMessage());
+        }
+
+        wp_send_json(array("success" => true, "result"=> $result));
+        wp_die();
         $rowCount = (int) get_option(PRODUCT_TOTAL_ROWS_COUNT, 0) - 1; 
         
 
