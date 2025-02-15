@@ -111,7 +111,13 @@ class WC_CSV_Importer {
 
         $offset = get_option('wc_csv_import_offset', 1);
 
+        
         if($offset == 0){
+            wp_send_json([
+                'url' => $csv_url,
+                'offset' => $offset
+            ]);
+            wp_die();
             $csv_file = wp_tempnam($csv_url);
             $response = wp_remote_get($csv_url, array(
                 'timeout'  => 1500,
@@ -131,6 +137,12 @@ class WC_CSV_Importer {
                 wp_die("Error retrieving csv file while offset was $offset");
             }
         }
+        wp_send_json([
+            'url' => $csv_url,
+            'offset' => $offset,
+            'file' => $csv_file
+        ]);
+        wp_die();
     
         $fileContentArray = file($csv_file);
         $total_rows = count($fileContentArray);
