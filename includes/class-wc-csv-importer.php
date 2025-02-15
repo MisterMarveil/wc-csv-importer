@@ -94,7 +94,7 @@ class WC_CSV_Importer {
         $this->retrieveCsvData();       
 
         wp_send_json([
-            'total_rows' => get_option(PRODUCT_TOTAL_ROWS_COUNT, 0),            
+            'total_rows' => ((int) get_option(PRODUCT_TOTAL_ROWS_COUNT, 0) - 1),             
         ]);
         wp_die;
     }
@@ -131,25 +131,20 @@ class WC_CSV_Importer {
             if (wp_remote_retrieve_response_code($response) !== 200) {
                 wp_die('HTTP error while downloading CSV: ' . wp_remote_retrieve_response_message($response));
             }
+
+            update_option(PRODUCT_FILE_OPTION, $csv_file);
         }else{
-            $csv_file = get_option('wc_csv_import_file', CSV_FILE_DEFAULT_VALUE);        
+            $csv_file = get_option(PRODUCT_FILE_OPTION, CSV_FILE_DEFAULT_VALUE);
+
             if (!is_file($csv_file)) {
                 wp_die("Error retrieving csv file while offset was $offset");
             }
         }
-        wp_send_json([
-            'url' => $csv_url,
-            'offset' => $offset,
-            'file' => $csv_file
-        ]);
-        wp_die();
-    
+        
         $fileContentArray = file($csv_file);
-        $total_rows = count($fileContentArray);
-
-        if($offset == 0) {//new file has been downloaded, maybe with new lines
-            update_option(PRODUCT_TOTAL_ROWS_COUNT, ($total_rows - 1));  //-1 we remove the headers row and save the number of rows
-        }
+        $total_rows = count($fileContentArray);       
+        update_option(PRODUCT_TOTAL_ROWS_COUNT, $total_rows);  //-1 we remove the headers row and save the number of rows
+        
         
         $separators = array();
         for($i = 0; $i < $total_rows; $i++) {
@@ -170,7 +165,7 @@ class WC_CSV_Importer {
         $result = $handler->import_products($batch, $header, $offset);
         //wp_send_json(array("success" => true, "result"=> $result));
         //wp_die();
-        $rowCount = get_option(PRODUCT_TOTAL_ROWS_COUNT, 0);
+        $rowCount = (int) get_option(PRODUCT_TOTAL_ROWS_COUNT, 0) - 1; 
         
 
         $progress = min($offset + BATCH_SIZE, $rowCount);
