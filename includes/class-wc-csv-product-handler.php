@@ -56,12 +56,13 @@ class WC_CSV_Product_Handler {
 
         // Step 2: Detect Variations and Prepare Variable Products
         foreach ($products_by_category as $category => $products) {
-            $detected_variations = $this->detect_variations($products);            
+            $detected_variations = $this->detect_variations($products);         
+            return $detected_variations;   
             foreach ($detected_variations as $common_name => $data) {
                 $sku_list = array_column($data['variations'], 'sku');
                  $variable_sku = implode('.', $sku_list);
                  $variationSkus = array_merge($variationSkus, $sku_list);
-                 return $sku_list;
+                // return $sku_list;
                 // Check if a variable product already exists using SKU LIKE query
                 $existing_product_id = $this->find_existing_variable_product($sku_list);
                 if ($existing_product_id) {
@@ -98,7 +99,7 @@ class WC_CSV_Product_Handler {
         }
 
        $csv_data = array_slice($batch, $offset, BATCH_SIZE);
-      
+      return $csv_data;
    
        // Step 3: Import Products
        foreach ($csv_data as $row) {
@@ -141,7 +142,7 @@ class WC_CSV_Product_Handler {
      
     public function detect_variations($products) {
         $variation_groups = [];
-        
+        return $products;
         foreach ($products as $i => $product1) {
             foreach ($products as $j => $product2) {
                 if ($i >= $j) continue; // Avoid duplicate comparisons
