@@ -170,12 +170,12 @@ class WC_CSV_Product_Handler {
                 // Try to infer variations by comparing product names
                 $matched_group = null;
                 foreach ($variation_groups as $group_id => $group_data) {
-                    $common_part = $this->extract_common_name($group_data['common_name'], $name);
-                    $group_data['common_name'] = $common_part;
+                    $common_part = $this->extract_common_name($group_data['common_name'], $name);                    
                     
                     // Ensure that the common part is significant (at least 60% of the shortest name)
                     $min_length = min(strlen($group_data['common_name']), strlen($name));
                     if ($common_part && strlen($common_part) >= 0.6 * $min_length) {
+                        $group_data['common_name'] = $common_part;
                         $matched_group = $group_id;
                         break;
                     }
