@@ -57,10 +57,10 @@ class WC_CSV_Product_Handler {
         // Step 2: Detect Variations and Prepare Variable Products
         foreach ($products_by_category as $category => $products) {
             $detected_variations = $this->detect_variations($products);         
-            foreach ($detected_variations as $common_name => $data) {
-                return $data;
-                $sku_list = array_column($data['variations'], 'sku');
-                return $detected_variations;
+            return $detected_variations;
+            foreach ($detected_variations as $common_name => $data) {               
+                $sku_list = array_column($data, 'sku');
+                return $sku_list;
                  $variable_sku = implode('.', $sku_list);
                  $variationSkus = array_merge($variationSkus, $sku_list);
                 // return $sku_list;
@@ -141,27 +141,53 @@ class WC_CSV_Product_Handler {
         return (bool) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_sku' AND meta_value = %s", $sku));
     }
      
-    public function detect_variations($products) {
+    public function detect_variations($csv_data) {
         $variation_groups = [];
-        
-        foreach ($products as $i => $product1) {
-            foreach ($products as $j => $product2) {
-                if ($i >= $j) continue; // Avoid duplicate comparisons
-                
-                $name1 = $product1['name'];
-                $name2 = $product2['name'];
-                
-                if ($this->similarity($name1, $name2) >= 60) { // 60% Similarity threshold
-                    $common_name = $this->find_common_substring($name1, $name2);
+
+        foreach ($csv_data as $product_data) {
+            $sku = $product_data['sku'];
+            $name = $product_data['name'];
+            $item_group_id = null;
+
+            // Check if variations_info_xml is provided and not empty
+            if (!empty($product_data['variations_info_xml'])) {
+                $xml = simplexml_load_string($product_data['variations_info_xml']);
+                if ($xml && isset($xml->variant->item_group_id)) {
+                    $item_group_id = (string) $xml->variant->item_group_id;
+                }
+            }
+
+            if ($item_group_id) {
+                // If item_group_id exists, group by it directly
+                if (!isset($variation_groups[$item_group_id])) {
+                    $variation_groups[$item_group_id] = [
+                        'common_name' => isset($xml->variant->common_title) ? (string)$xml->variant->common_title : $name,
+                        'variations' => []
+                    ];
+                }
+                $variation_groups[$item_group_id]['variations'][] = $product_data;
+            } else {
+                // Try to infer variations by comparing product names
+                $matched_group = null;
+                foreach ($variation_groups as $group_id => $group_data) {
+                    $common_part = $this->extract_common_name($group_data['common_name'], $name);
                     
-                    if (!empty($common_name)) {
-                        if (!isset($variation_groups[$common_name])) {
-                            $variation_groups[$common_name] = [];
-                        }
-                        
-                        $variation_groups[$common_name][] = $product1;
-                        $variation_groups[$common_name][] = $product2;
+                    // Ensure that the common part is significant (at least 60% of the shortest name)
+                    $min_length = min(strlen($group_data['common_name']), strlen($name));
+                    if ($common_part && strlen($common_part) >= 0.6 * $min_length) {
+                        $matched_group = $group_id;
+                        break;
                     }
+                }
+                
+                if ($matched_group) {
+                    $variation_groups[$matched_group]['variations'][] = $product_data;
+                } else {
+                    $new_group_id = 'auto_' . md5($name);
+                    $variation_groups[$new_group_id] = [
+                        'common_name' => $name,
+                        'variations' => [$product_data]
+                    ];
                 }
             }
         }
@@ -169,31 +195,21 @@ class WC_CSV_Product_Handler {
         return $variation_groups;
     }
 
-    private function similarity($str1, $str2) {
-        similar_text($str1, $str2, $percent);
-        return $percent;
-    }
-
-    private function find_common_substring($str1, $str2) {
-        $len1 = strlen($str1);
-        $len2 = strlen($str2);
-        $longest = '';
+    private function extract_common_name($name1, $name2) {
+        $length1 = strlen($name1);
+        $length2 = strlen($name2);
+        $max_length = min($length1, $length2);
         
-        for ($i = 0; $i < $len1; $i++) {
-            for ($j = 0; $j < $len2; $j++) {
-                $match = '';
-                
-                while ($i + strlen($match) < $len1 && $j + strlen($match) < $len2 && $str1[$i + strlen($match)] == $str2[$j + strlen($match)]) {
-                    $match .= $str1[$i + strlen($match)];
-                }
-                
-                if (strlen($match) > strlen($longest)) {
-                    $longest = $match;
-                }
+        $common_part = '';
+        for ($i = 0; $i < $max_length; $i++) {
+            if ($name1[$i] === $name2[$i]) {
+                $common_part .= $name1[$i];
+            } else {
+                break;
             }
         }
         
-        return trim($longest);
+        return trim($common_part);
     }
 
     private function import_variable_product($sku, $variable_data) {
