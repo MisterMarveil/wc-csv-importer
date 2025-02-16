@@ -58,8 +58,9 @@ class WC_CSV_Product_Handler {
         foreach ($products_by_category as $category => $products) {
             $detected_variations = $this->detect_variations($products);         
             foreach ($detected_variations as $common_name => $data) {
-                return $detected_variations;
+                return $data;
                 $sku_list = array_column($data['variations'], 'sku');
+                return $detected_variations;
                  $variable_sku = implode('.', $sku_list);
                  $variationSkus = array_merge($variationSkus, $sku_list);
                 // return $sku_list;
