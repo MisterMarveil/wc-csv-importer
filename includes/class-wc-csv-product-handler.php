@@ -31,11 +31,11 @@ class WC_CSV_Product_Handler {
     }
 
     public function import_products($batch, $header, $offset) {
-        if ($this->is_locked()) {
+        /*if ($this->is_locked()) {
             error_log("CSV import is already running. Aborting new import.");
             wp_die("CSV import is already running. Aborting new import.");
         }        
-        $this->lock();
+        $this->lock();*/
 
 
         $products_by_category = [];     
@@ -52,6 +52,7 @@ class WC_CSV_Product_Handler {
 
             $products_by_category[$category][] = $product_data;
         }
+        return $products_by_category;
 
         // Step 2: Detect Variations and Prepare Variable Products
         foreach ($products_by_category as $category => $products) {

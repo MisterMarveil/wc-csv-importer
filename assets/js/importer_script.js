@@ -52,9 +52,7 @@ jQuery(document).ready(function($) {
             data: {
                 action: 'process_import_batch',
                 file_path: filePath,
-                offset: offset,
-                insert_count: insertCount,
-                update_count: updateCount
+                offset: offset                
             },
             success: function(response) {
                 if (response.error) {
