@@ -171,6 +171,7 @@ class WC_CSV_Product_Handler {
                 $matched_group = null;
                 foreach ($variation_groups as $group_id => $group_data) {
                     $common_part = $this->extract_common_name($group_data['common_name'], $name);
+                    $group_data['common_name'] = $common_part;
                     
                     // Ensure that the common part is significant (at least 60% of the shortest name)
                     $min_length = min(strlen($group_data['common_name']), strlen($name));
