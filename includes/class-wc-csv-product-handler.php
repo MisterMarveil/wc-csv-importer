@@ -52,7 +52,7 @@ class WC_CSV_Product_Handler {
 
             $products_by_category[$category][] = $product_data;
         }
-        return $products_by_category;
+        
 
         // Step 2: Detect Variations and Prepare Variable Products
         foreach ($products_by_category as $category => $products) {
@@ -98,6 +98,7 @@ class WC_CSV_Product_Handler {
         }
 
        $csv_data = array_slice($batch, $offset, BATCH_SIZE);
+       return $csv_data;
    
        // Step 3: Import Products
        foreach ($csv_data as $row) {
