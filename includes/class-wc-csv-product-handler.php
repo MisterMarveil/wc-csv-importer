@@ -56,11 +56,11 @@ class WC_CSV_Product_Handler {
 
         // Step 2: Detect Variations and Prepare Variable Products
         foreach ($products_by_category as $category => $products) {
-            $detected_variations = $this->detect_variations($products);         
-            return $detected_variations;
+            $detected_variations = $this->detect_variations($products); 
+            if(count($detected_variations))
+                return $detected_variations;
             foreach ($detected_variations as $common_name => $data) {               
-                $sku_list = array_column($data, 'sku');
-                return $sku_list;
+                $sku_list = array_column($data, 'sku');                
                  $variable_sku = implode('.', $sku_list);
                  $variationSkus = array_merge($variationSkus, $sku_list);
                 // return $sku_list;
