@@ -142,7 +142,7 @@ class WC_CSV_Product_Handler {
      
     public function detect_variations($products) {
         $variation_groups = [];
-        return $products;
+        
         foreach ($products as $i => $product1) {
             foreach ($products as $j => $product2) {
                 if ($i >= $j) continue; // Avoid duplicate comparisons
