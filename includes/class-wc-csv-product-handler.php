@@ -62,8 +62,7 @@ class WC_CSV_Product_Handler {
                 $sku_list = array_column($data['variations'], 'sku');                
                 $variable_sku = implode('.', $sku_list);
                 $variationSkus = array_merge($variationSkus, $sku_list);
-                return $sku_list;
-
+                
                 // Check if a variable product already exists using SKU LIKE query
                 $existing_product_id = $this->find_existing_variable_product($sku_list);
                 if ($existing_product_id) {
@@ -88,7 +87,7 @@ class WC_CSV_Product_Handler {
                     
                     // Create new variable product                    
                     $productId = $this->import_variable_product($variable_sku, [
-                        'name' => $common_name,                        
+                        'name' => $data["common_name"],                        
                         'variations' => $data['variations']
                     ]);
 
@@ -221,6 +220,7 @@ class WC_CSV_Product_Handler {
     }
 
     private function import_variable_product($sku, $variable_data) {
+        return $variable_data;
         $existing_product_id = wc_get_product_id_by_sku($sku);
         if ($existing_product_id) {
             return wc_get_product($existing_product_id);
