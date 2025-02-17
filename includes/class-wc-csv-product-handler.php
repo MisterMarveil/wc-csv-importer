@@ -84,7 +84,6 @@ class WC_CSV_Product_Handler {
                         continue;
                     }
                 } else {
-                    return $variable_sku;
                     // Create new variable product                    
                     $productId = $this->import_variable_product($variable_sku, [
                         'name' => $data["common_name"],                        
@@ -228,7 +227,8 @@ class WC_CSV_Product_Handler {
                
         if (!$product_id) {
             $product = new WC_Product_Variable();
-            $product->set_name($variable_data['name']);
+            $extract = $this->extract_attribute_from_common_name($variable_data['name']);
+            $product->set_name($extract['common_name']);
             $product->set_sku($sku);
             
             // Assign main image from first variation
@@ -255,6 +255,22 @@ class WC_CSV_Product_Handler {
         foreach ($variable_data['variations'] as $variation_data) {
             $this->import_variation($product_id, $variation_data, $variable_data['name']);
         }
+    }
+
+    private function extract_attribute_from_common_name($common_name) {
+        $attribute_keywords = ['taille', 'couleur', 'format', 'poids']; // Extend as needed
+        
+        foreach ($attribute_keywords as $keyword) {
+            if (stripos($common_name, $keyword) !== false) {
+                $cleaned_name = trim(str_ireplace($keyword, '', $common_name));
+                return [
+                    'common_name' => $cleaned_name,
+                    'attribute' => ucfirst($keyword)
+                ];
+            }
+        }
+        
+        return false;
     }
 
     private function find_existing_variable_product($sku_list) {
