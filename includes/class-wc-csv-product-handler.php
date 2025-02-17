@@ -175,7 +175,7 @@ class WC_CSV_Product_Handler {
                     // Ensure that the common part is significant (at least 60% of the shortest name)
                     $min_length = min(strlen($group_data['common_name']), strlen($name));
                     if ($common_part && strlen($common_part) >= 0.6 * $min_length) {
-                        $group_data['common_name'] = $common_part;
+                        $variation_groups[$group_id]['common_name'] = $common_part;
                         $matched_group = $group_id;
                         break;
                     }
