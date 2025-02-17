@@ -57,43 +57,45 @@ class WC_CSV_Product_Handler {
         // Step 2: Detect Variations and Prepare Variable Products
         foreach ($products_by_category as $category => $products) {
             $detected_variations = $this->detect_variations($products); 
-            if(count($detected_variations))
-                return $detected_variations;
-            foreach ($detected_variations as $common_name => $data) {               
-                $sku_list = array_column($data, 'sku');                
-                 $variable_sku = implode('.', $sku_list);
-                 $variationSkus = array_merge($variationSkus, $sku_list);
-                // return $sku_list;
-                // Check if a variable product already exists using SKU LIKE query
-                $existing_product_id = $this->find_existing_variable_product($sku_list);
-                if ($existing_product_id) {
-                    // Fetch existing concatenated SKU
-                    $existing_sku = get_post_meta($existing_product_id, '_sku', true);
-                    
-                    if ($existing_sku !== $variable_sku) {
-                        // SKU changed -> update the variable product
-                        update_post_meta($existing_product_id, '_sku', $variable_sku);
+           
+            foreach ($detected_variations as $group_id => $data) {               
+                foreach ($data['variations'] as $data) {                               
+                    $sku_list = array_column($data, 'sku');                
+                    $variable_sku = implode('.', $sku_list);
+                    $variationSkus = array_merge($variationSkus, $sku_list);
+                     return $sku_list;
+                     
+                    // Check if a variable product already exists using SKU LIKE query
+                    $existing_product_id = $this->find_existing_variable_product($sku_list);
+                    if ($existing_product_id) {
+                        // Fetch existing concatenated SKU
+                        $existing_sku = get_post_meta($existing_product_id, '_sku', true);
                         
-                        // Remove existing variations
-                        $this->remove_existing_variations($existing_product_id);
+                        if ($existing_sku !== $variable_sku) {
+                            // SKU changed -> update the variable product
+                            update_post_meta($existing_product_id, '_sku', $variable_sku);
+                            
+                            // Remove existing variations
+                            $this->remove_existing_variations($existing_product_id);
 
-                        // Add new variations
-                        foreach ($data['variations'] as $variation) {
-                            $this->import_variation($existing_product_id, $variation, $common_name);
+                            // Add new variations
+                            foreach ($data['variations'] as $variation) {
+                                $this->import_variation($existing_product_id, $variation, $common_name);
+                            }
+                        }else{
+                            continue;
                         }
-                    }else{
-                        continue;
-                    }
-                } else {
-                    
-                    // Create new variable product                    
-                    $productId = $this->import_variable_product($variable_sku, [
-                        'name' => $common_name,                        
-                        'variations' => $data['variations']
-                    ]);
+                    } else {
+                        
+                        // Create new variable product                    
+                        $productId = $this->import_variable_product($variable_sku, [
+                            'name' => $common_name,                        
+                            'variations' => $data['variations']
+                        ]);
 
-                    foreach ($data['variations'] as $variation) {
-                        $this->import_variation($productId, $variation, $common_name);
+                        foreach ($data['variations'] as $variation) {
+                            $this->import_variation($productId, $variation, $common_name);
+                        }
                     }
                 }
             }
