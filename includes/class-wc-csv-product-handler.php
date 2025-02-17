@@ -84,7 +84,7 @@ class WC_CSV_Product_Handler {
                         continue;
                     }
                 } else {
-                    
+                    return $variable_sku;
                     // Create new variable product                    
                     $productId = $this->import_variable_product($variable_sku, [
                         'name' => $data["common_name"],                        
@@ -220,7 +220,7 @@ class WC_CSV_Product_Handler {
     }
 
     private function import_variable_product($sku, $variable_data) {
-        return $variable_data;
+        
         $existing_product_id = wc_get_product_id_by_sku($sku);
         if ($existing_product_id) {
             return wc_get_product($existing_product_id);
