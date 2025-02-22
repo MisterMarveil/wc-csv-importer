@@ -160,7 +160,6 @@ class WC_CSV_Importer {
         $offset = get_option(PRODUCT_OFFSET_OPTION, 0);
         $batch = array_slice($csv_data, $offset, BATCH_CATEGORY_SIZE);
         
-
         $handler = new WC_CSV_Product_Handler();
         try{
             $result = $handler->import_products($batch, $header, $offset);
@@ -266,7 +265,7 @@ class WC_CSV_Importer {
         $wpdb->query("ALTER TABLE {$wpdb->terms} AUTO_INCREMENT = 1");
         $wpdb->query("ALTER TABLE {$wpdb->term_taxonomy} AUTO_INCREMENT = 1");
 
-         update_option(INSERTION_COUNT_OPTION,0);
+        update_option(INSERTION_COUNT_OPTION,0);
         update_option(PRODUCT_OFFSET_OPTION,1);
         update_option(UPDATE_COUNT_OPTION,0);
         

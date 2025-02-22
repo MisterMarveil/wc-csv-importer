@@ -371,7 +371,7 @@ class WC_CSV_Product_Handler {
         $product->save();      
     }
 
-    private function import_variation($product_id, $product_data, $commonName) {
+    private function import_variation($product_id, $product_data, $common_name) {
         $variation = new WC_Product_Variation();
         $variation->set_parent_id($product_id);
         $variation->set_sku($product_data['sku']);
@@ -388,9 +388,23 @@ class WC_CSV_Product_Handler {
             
         $xml = simplexml_load_string($product_data['variations_info_xml']);
         if (!$xml) {
-            $var_attributes = ["précisions" => trim(str_replace($commonName, '', $product_data['name']))];           
+            $extracted = $this->extract_attribute_from_common_name($product_data['name']);
+            
+            $var_attributes = array();   
+            if($extracted === false){               
+                $var_groupname = 'details';
+                $var_name = "details";
+                $var_value = str_replace($common_name, '', $product_data['name']);
+                
+            }else{
+                $var_value = trim(str_replace($common_name, '', $product_data['name']));//important de prendre cette valeur avant de changer la valeur du common_name
+                $common_name = $extracted["common_name"];
+                $var_groupname = $extracted["attribute"];
+                $var_name = $var_groupname;
+            }
+
+            $var_attributes[$var_name] = $var_value;
             $variation->set_attributes($var_attributes);
-            $attributes = ['precisions' => "attributs"];
         }else{
             foreach ($xml->variant as $variant) {
                 $var_attributes = [];
@@ -473,6 +487,7 @@ class WC_CSV_Product_Handler {
         
         // Assign attributes to the parent variable product
         $product = wc_get_product($product_id);
+        $product->set_name($common_name);
         $product->set_attributes($this->prepare_variation_attributes($attributes));
         $product->save();
     }
