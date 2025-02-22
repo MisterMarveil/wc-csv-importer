@@ -57,8 +57,7 @@ class WC_CSV_Product_Handler {
         // Step 2: Detect Variations and Prepare Variable Products
         foreach ($products_by_category as $category => $products) {
             $detected_variations = $this->detect_variations($products); 
-            if(count($detected_variations))
-                return $detected_variations;
+        
            
             foreach ($detected_variations as $group_id => $data) {                                                        
                 $sku_list = array_column($data['variations'], 'sku');                
@@ -67,6 +66,11 @@ class WC_CSV_Product_Handler {
                 
                 // Check if a variable product already exists using SKU LIKE query
                 $existing_product_id = $this->find_existing_variable_product($sku_list);
+                return [
+                    "product" => $existing_product_id,
+                    "variations" => $data['variations'],
+                    "common_name" => $data["common_name"]
+                ];
                 if ($existing_product_id) {
                     // Fetch existing concatenated SKU
                     $existing_sku = get_post_meta($existing_product_id, '_sku', true);
