@@ -66,11 +66,7 @@ class WC_CSV_Product_Handler {
                 
                 // Check if a variable product already exists using SKU LIKE query
                 $existing_product_id = $this->find_existing_variable_product($sku_list);
-                return [
-                    "product" => $existing_product_id,
-                    "variations" => $data['variations'],
-                    "common_name" => $data["common_name"]
-                ];
+                
                 if ($existing_product_id) {
                     // Fetch existing concatenated SKU
                     $existing_sku = get_post_meta($existing_product_id, '_sku', true);
@@ -84,7 +80,7 @@ class WC_CSV_Product_Handler {
 
                         // Add new variations
                         foreach ($data['variations'] as $variation) {
-                            $this->import_variation($existing_product_id, $variation, $common_name);
+                            return $this->import_variation($existing_product_id, $variation, $common_name);
                         }
                     }else{
                         continue;
@@ -391,6 +387,7 @@ class WC_CSV_Product_Handler {
         $variation->set_stock_status((string) $product_data['stock_status']);
 
         $attributes = [];
+            return ["good" => true];
             
         $xml = simplexml_load_string($product_data['variations_info_xml']);
         if (!$xml) {
