@@ -86,6 +86,8 @@ class WC_CSV_Product_Handler {
                         continue;
                     }
                 } else {
+                    return ["some" => true];
+                    
                     // Create new variable product                    
                     $productId = $this->import_variable_product($variable_sku, [
                         'name' => $data["common_name"],                        
@@ -388,7 +390,7 @@ class WC_CSV_Product_Handler {
 
         $attributes = [];
             return ["good" => true];
-            
+
         $xml = simplexml_load_string($product_data['variations_info_xml']);
         if (!$xml) {
             $extracted = $this->extract_attribute_from_common_name($product_data['name']);
