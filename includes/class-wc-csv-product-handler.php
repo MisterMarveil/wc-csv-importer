@@ -88,14 +88,10 @@ class WC_CSV_Product_Handler {
                 } else {
 
                     // Create new variable product                    
-                    return $productId = $this->import_variable_product($variable_sku, [
+                    $this->import_variable_product($variable_sku, [
                         'name' => $data["common_name"],                        
                         'variations' => $data['variations']
                     ]);
-                    
-                    foreach ($data['variations'] as $variation) {
-                        $this->import_variation($productId, $variation, $common_name);
-                    }
                 }
             }
             
@@ -224,9 +220,7 @@ class WC_CSV_Product_Handler {
     private function import_variable_product($sku, $variable_data) {
         
         $existing_product_id = wc_get_product_id_by_sku($sku);
-        if ($existing_product_id) {
-            return wc_get_product($existing_product_id);
-        }else{
+        if (!$existing_product_id) {            
             $product = new WC_Product_Variable();
             $extract = $this->extract_attribute_from_common_name($variable_data['name']);
             $product->set_name($extract['common_name']);
@@ -250,11 +244,17 @@ class WC_CSV_Product_Handler {
             }
             
             $product->save();
-            $product_id = $product->get_id();
+            $existing_product_id = $product->get_id();
+        }else{
+            update_post_meta($existing_product_id, '_sku', $sku);
+                        
+            // Remove existing variations
+            $this->remove_existing_variations($existing_product_id);
+
         }
        
         foreach ($variable_data['variations'] as $variation_data) {
-            return ["bein" => $this->import_variation($product_id, $variation_data, $variable_data['name'])];
+            $this->import_variation($existing_product_id, $variation_data, $variable_data['name']);
         }
     }
 
@@ -373,8 +373,6 @@ class WC_CSV_Product_Handler {
     }
 
     private function import_variation($product_id, $product_data, $common_name) {
-        return ["good" => true, "common" => $common_name, "specific" => $product_data['name']];
-        
         $variation = new WC_Product_Variation();
         $variation->set_parent_id($product_id);
         $variation->set_sku($product_data['sku']);
