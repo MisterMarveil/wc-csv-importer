@@ -86,14 +86,15 @@ class WC_CSV_Product_Handler {
                         continue;
                     }
                 } else {
-                    return ["some" => true];
-                    
+                   
+
                     // Create new variable product                    
                     $productId = $this->import_variable_product($variable_sku, [
                         'name' => $data["common_name"],                        
                         'variations' => $data['variations']
                     ]);
-
+                    
+                    return ["_some" => true];
                     foreach ($data['variations'] as $variation) {
                         $this->import_variation($productId, $variation, $common_name);
                     }
