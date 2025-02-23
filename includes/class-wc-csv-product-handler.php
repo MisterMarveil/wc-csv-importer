@@ -375,7 +375,7 @@ class WC_CSV_Product_Handler {
     }
 
     private function import_variation($product_id, $product_data, $common_name) {
-        return ["good" => true];
+        return ["good" => true, "common" => $common_name, "specific" => $product_data['name']];
         
         $variation = new WC_Product_Variation();
         $variation->set_parent_id($product_id);
