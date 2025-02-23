@@ -80,7 +80,7 @@ class WC_CSV_Product_Handler {
 
                         // Add new variations
                         foreach ($data['variations'] as $variation) {
-                            return $this->import_variation($existing_product_id, $variation, $common_name);
+                            return $this->import_variation($existing_product_id, $variation, $data["common_name"]);
                         }
                     }else{
                         continue;
@@ -254,7 +254,7 @@ class WC_CSV_Product_Handler {
         }
        
         foreach ($variable_data['variations'] as $variation_data) {
-            return $this->import_variation($existing_product_id, $variation_data, $variable_data['name']);
+            $this->import_variation($existing_product_id, $variation_data, $variable_data['name']);
         }
     }
 
@@ -386,9 +386,6 @@ class WC_CSV_Product_Handler {
         $variation->set_stock_status((string) $product_data['stock_status']);
 
         $attributes = [];
-            
-        return ["let_see" => "false", "product_data" => $product_data, "common" => $common_name];
-        
         $xml = simplexml_load_string($product_data['variations_info_xml']);
         if (!$xml) {
             $extracted = $this->extract_attribute_from_common_name($product_data['name']);
