@@ -228,13 +228,13 @@ class WC_CSV_Product_Handler {
             return wc_get_product($existing_product_id);
         }
            
-        return ["some" => true];
         if (!$product_id) {
             $product = new WC_Product_Variable();
             $extract = $this->extract_attribute_from_common_name($variable_data['name']);
             $product->set_name($extract['common_name']);
             $product->set_sku($sku);
             
+            return ["_some_" => true];
             // Assign main image from first variation
             if (!empty($variable_data['variations'][0]['main_image_url'])) {
                 $this->set_product_image($product, $variable_data['variations'][0]['main_image_url']);
@@ -257,7 +257,7 @@ class WC_CSV_Product_Handler {
         }
         
         foreach ($variable_data['variations'] as $variation_data) {
-            $this->import_variation($product_id, $variation_data, $variable_data['name']);
+            return $this->import_variation($product_id, $variation_data, $variable_data['name']);
         }
     }
 
