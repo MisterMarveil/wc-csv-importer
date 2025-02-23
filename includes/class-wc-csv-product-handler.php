@@ -254,8 +254,7 @@ class WC_CSV_Product_Handler {
             $product->save();
             $product_id = $product->get_id();
         }
-        return ["some_" => true];
-            
+        
         foreach ($variable_data['variations'] as $variation_data) {
             return $this->import_variation($product_id, $variation_data, $variable_data['name']);
         }
