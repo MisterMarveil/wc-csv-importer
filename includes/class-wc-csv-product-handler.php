@@ -379,7 +379,7 @@ class WC_CSV_Product_Handler {
         $variation->set_name($product_data['name']);
         $variation->set_description($product_data['html_description']);
         $variation->set_short_description($product_data['description']);
-        $variation->set_min_purchase_quantity($product_data['minimum_units_per_order']);
+        //$variation->set_min_purchase_quantity($product_data['minimum_units_per_order']);
         $variation->set_regular_price((string) $product_data['recommended_sale_price']);
         $variation->set_manage_stock(true);
         $variation->set_stock_quantity((int) $product_data['available_stock']);
