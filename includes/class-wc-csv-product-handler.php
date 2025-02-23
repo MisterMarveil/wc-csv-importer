@@ -88,7 +88,7 @@ class WC_CSV_Product_Handler {
                 } else {
 
                     // Create new variable product                    
-                    $this->import_variable_product($variable_sku, [
+                   return  $this->import_variable_product($variable_sku, [
                         'name' => $data["common_name"],                        
                         'variations' => $data['variations']
                     ]);
@@ -253,6 +253,7 @@ class WC_CSV_Product_Handler {
 
         }
        
+        return ["let_see" => "false"];
         foreach ($variable_data['variations'] as $variation_data) {
             $this->import_variation($existing_product_id, $variation_data, $variable_data['name']);
         }
