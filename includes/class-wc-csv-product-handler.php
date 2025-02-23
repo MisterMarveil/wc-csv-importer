@@ -86,15 +86,13 @@ class WC_CSV_Product_Handler {
                         continue;
                     }
                 } else {
-                   
 
                     // Create new variable product                    
-                    $productId = $this->import_variable_product($variable_sku, [
+                    return $productId = $this->import_variable_product($variable_sku, [
                         'name' => $data["common_name"],                        
                         'variations' => $data['variations']
                     ]);
                     
-                    return ["_some" => true];
                     foreach ($data['variations'] as $variation) {
                         $this->import_variation($productId, $variation, $common_name);
                     }
@@ -229,7 +227,8 @@ class WC_CSV_Product_Handler {
         if ($existing_product_id) {
             return wc_get_product($existing_product_id);
         }
-               
+           
+        return ["some" => true];
         if (!$product_id) {
             $product = new WC_Product_Variable();
             $extract = $this->extract_attribute_from_common_name($variable_data['name']);
