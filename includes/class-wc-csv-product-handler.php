@@ -226,9 +226,7 @@ class WC_CSV_Product_Handler {
         $existing_product_id = wc_get_product_id_by_sku($sku);
         if ($existing_product_id) {
             return wc_get_product($existing_product_id);
-        }
-           
-        if (!$product_id) {
+        }else{
             $product = new WC_Product_Variable();
             $extract = $this->extract_attribute_from_common_name($variable_data['name']);
             $product->set_name($extract['common_name']);
@@ -254,9 +252,9 @@ class WC_CSV_Product_Handler {
             $product->save();
             $product_id = $product->get_id();
         }
-        
+       
         foreach ($variable_data['variations'] as $variation_data) {
-            return $this->import_variation($product_id, $variation_data, $variable_data['name']);
+            return ["bein" => $this->import_variation($product_id, $variation_data, $variable_data['name'])];
         }
     }
 
