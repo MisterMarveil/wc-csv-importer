@@ -440,8 +440,7 @@ class WC_CSV_Product_Handler {
         }
 
         $variation->save();
-        return ["details" => "variation saved", "variation_name" => $variation->get_name(), "variation_id" => $variation->get_id()];
-
+        
         // Assign purchase price
         update_post_meta($variation->get_id(), '_purchase_price', $product_data['dealer_price']);
         
@@ -487,7 +486,8 @@ class WC_CSV_Product_Handler {
 
         $variation->save();
         
-        
+        return ["details" => "variation saved", "variation_name" => $variation->get_name(), "variation_id" => $variation->get_id(), "attributes" => $attributes];
+
         // Assign attributes to the parent variable product
         $product = wc_get_product($product_id);
         $product->set_name($common_name);
