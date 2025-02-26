@@ -253,6 +253,7 @@ class WC_CSV_Product_Handler {
 
         }
        
+        return ["good" => true, "data" => $variable_data["variations"]];
         foreach ($variable_data['variations'] as $variation_data) {
             $this->import_variation($existing_product_id, $variation_data, $variable_data['name']);
         }
