@@ -383,6 +383,8 @@ class WC_CSV_Product_Handler {
         $variation->set_short_description($product_data['description']);
         //$variation->set_min_purchase_quantity($product_data['minimum_units_per_order']);
         $variation->set_regular_price((string) $product_data['recommended_sale_price']);
+
+        
         $variation->set_manage_stock(true);
         $variation->set_stock_quantity((int) $product_data['available_stock']);
         $variation->set_stock_status((string) $product_data['stock_status']);
@@ -391,7 +393,7 @@ class WC_CSV_Product_Handler {
         $xml = simplexml_load_string($product_data['variations_info_xml']);
         if (!$xml) {
             $extracted = $this->extract_attribute_from_common_name($product_data['name']);
-            
+            return ["extracted" => $extracted];
             $var_attributes = array();   
             if($extracted === false){               
                 $var_groupname = 'details';
@@ -420,6 +422,7 @@ class WC_CSV_Product_Handler {
                         $var_attributes[$var_name] = $var_value;
                     }
                 }
+                return ["var_attributes" => $var_attributes, "attributes" => $attributes];
                 
                 $variation->set_attributes($var_attributes);
             }
@@ -440,53 +443,59 @@ class WC_CSV_Product_Handler {
         }
 
         $variation->save();
+        $variation_id = $variation->get_id();
+
+        $product_data['available_stock'] = !empty($product_data['available_stock']) ? $product_data['available_stock'] : 0;
+        update_post_meta($variation_id, '_stock', wc_clean($product_data['available_stock']));
+        update_post_meta($variation_id, '_stock_status', (intval($product_data['available_stock']) > 0) ? 'instock' : 'outofstock');
+        update_post_meta($variation_id, '_manage_stock', 'yes');
         
         // Assign purchase price
-        update_post_meta($variation->get_id(), '_purchase_price', $product_data['dealer_price']);
+        update_post_meta($variation_id, '_purchase_price', $product_data['dealer_price']);
         
         // Assign brand
         if (!empty($product_data['brand'])) {
             $brand_ids = $this->create_and_assign_brand_with_hierarchy($product_data['brand'], explode("|", $product_data["brand_hierarchy"]));
 
             if(count($brand_ids)){
-                wp_set_object_terms( $variation->get_id(), $brand_ids, 'product_brand' );
+                wp_set_object_terms( $variation_id, $brand_ids, 'product_brand' );
             }            
         }
         
         // Assign EAN code
         if (!empty($product_data['ean'])) {
-            update_post_meta($variation->get_id(), '_ean_code', $product_data['ean']);
+            update_post_meta($variation_id, '_ean_code', $product_data['ean']);
         }
 
         // Assign VAT percentage
         if (!empty($product_data['vat_percentage'])) {
-            update_post_meta($variation->get_id(), '_vat_percentage', $product_data['vat_percentage']);
+            update_post_meta($variation_id, '_vat_percentage', $product_data['vat_percentage']);
         }
 
         // Assign shipping costs
         if (!empty($product_data['shipping_costs'])) {
-            update_post_meta($variation->get_id(), '_shipping_costs', $product_data['shipping_costs']);
+            update_post_meta($variation_id, '_shipping_costs', $product_data['shipping_costs']);
         }
         
         
             // Assign shipping costs
         if (!empty($product_data['hs_intrastat_code'])) {
-            update_post_meta($variation->get_id(), '_hs_intrastat_code', $product_data['hs_intrastat_code']);
+            update_post_meta($variation_id, '_hs_intrastat_code', $product_data['hs_intrastat_code']);
         }
         
         // Assign barcodes
         if (!empty($product_data['barcode_info_xml'])) {
-            update_post_meta($variation->get_id(), '_ean_code', $product_data['barcode_info_xml']);
+            update_post_meta($variation_id, '_ean_code', $product_data['barcode_info_xml']);
         }
 
         // Set minimum order quantity
         if (!empty($product_data['minimum_units_per_order'])) {
-            update_post_meta($variation->get_id(), '_min_units_per_order', (int)$product_data['minimum_units_per_order']);
+            update_post_meta($variation_id, '_min_units_per_order', (int)$product_data['minimum_units_per_order']);
         }
 
         $variation->save();
         
-        return ["details" => "variation saved", "variation_name" => $variation->get_name(), "variation_id" => $variation->get_id(), "attributes" => $attributes];
+        return ["details" => "variation saved", "variation_name" => $variation->get_name(), "variation_id" => $variation_id, "attributes" => $attributes];
 
         // Assign attributes to the parent variable product
         $product = wc_get_product($product_id);
