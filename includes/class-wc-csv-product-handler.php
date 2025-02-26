@@ -253,10 +253,11 @@ class WC_CSV_Product_Handler {
 
         }
        
-        return ["good" => true, "data" => $variable_data["variations"]];
+        
         foreach ($variable_data['variations'] as $variation_data) {
-            $this->import_variation($existing_product_id, $variation_data, $variable_data['name']);
+            return $this->import_variation($existing_product_id, $variation_data, $variable_data['name']);
         }
+        return ["good" => "variable imported"];
     }
 
     private function extract_attribute_from_common_name($common_name) {
@@ -439,6 +440,7 @@ class WC_CSV_Product_Handler {
         }
 
         $variation->save();
+        return ["details" => "variation saved", "variation_name" => $variation->get_name(), "variation_id" => $variation->get_id()];
 
         // Assign purchase price
         update_post_meta($variation->get_id(), '_purchase_price', $product_data['dealer_price']);
