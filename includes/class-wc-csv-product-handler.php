@@ -393,7 +393,8 @@ class WC_CSV_Product_Handler {
         $xml = simplexml_load_string($product_data['variations_info_xml']);
         if (!$xml) {
             $extracted = $this->extract_attribute_from_common_name($product_data['name']);
-            return ["extracted" => $extracted, "name" => $product_data['name']];
+            //return ["extracted" => $extracted, "name" => $product_data['name']];
+
             $var_attributes = array();   
             if($extracted === false){               
                 $var_groupname = 'details';
@@ -407,6 +408,7 @@ class WC_CSV_Product_Handler {
                 $var_name = $var_groupname;
             }
 
+            return ["common_name", $common_name, "var_group" => $var_groupname, "var_name" => $var_name, "value" => $var_value];
             $var_attributes[$var_name] = $var_value;
             $variation->set_attributes($var_attributes);
         }else{
