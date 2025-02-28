@@ -37,7 +37,7 @@ class WC_CSV_Product_Handler {
         }        
         $this->lock();*/
 
-
+        return array("good" => true);
         $products_by_category = [];     
         $variationSkus = []; 
     
