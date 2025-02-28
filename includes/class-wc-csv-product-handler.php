@@ -247,8 +247,7 @@ class WC_CSV_Product_Handler {
            //$product = $this->remove_existing_variations($existing_product_id);
 
        // }
-       return $variable_data['variations'];
-
+       
         $attributes_variations_data = $this->extract_attributes($product, $variable_data['variations']);
         return array("att_var_data" => $attributes_variations_data);
 
@@ -259,7 +258,12 @@ class WC_CSV_Product_Handler {
         $attributes = ["details" => array()];
         $variations = [];
         foreach ($variation_products as $variation_data) {
-           return  $suffixe_part = str_replace($product->get_name(), '', $variation_data['name']);
+            $suffixe_part = str_replace($product->get_name(), '', $variation_data['name']);
+            return [
+                "suffixe" => $suffixe_part,
+                "name" => $product->get_name(),
+                "variation" => $variation_data['name']
+            ];
             $extracted = $this->extract_attribute_from_common_name($suffixe_part);
             $variation_attributes = [];
 
