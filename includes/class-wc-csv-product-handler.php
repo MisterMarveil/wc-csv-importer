@@ -73,26 +73,16 @@ class WC_CSV_Product_Handler {
                     
                     if ($existing_sku !== $variable_sku) {
                         // SKU changed -> update the variable product
-                        update_post_meta($existing_product_id, '_sku', $variable_sku);
-                        
-                        // Remove existing variations
-                        $this->remove_existing_variations($existing_product_id);
-
-                        // Add new variations
-                        foreach ($data['variations'] as $variation) {
-                            return $this->import_variation($existing_product_id, $variation, $data["common_name"]);
-                        }
-                    }else{
-                        continue;
+                        update_post_meta($existing_product_id, '_sku', $variable_sku);                        
                     }
-                } else {
-
-                    // Create new variable product                    
-                   return  $this->import_variable_product($variable_sku, [
-                        'name' => $data["common_name"],                        
-                        'variations' => $data['variations']
-                    ]);
                 }
+
+                // Create new variable product                    
+                return  $this->import_variable_product($variable_sku, [
+                    'name' => $data["common_name"],                        
+                    'variations' => $data['variations']
+                ]);
+            
             }
             
         }
@@ -132,6 +122,8 @@ class WC_CSV_Product_Handler {
     private function remove_existing_variations($product_id) {
         global $wpdb;
         $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->posts} WHERE post_type = 'product_variation' AND post_parent = %d", $product_id));
+
+        return wc_get_product($product_id);           
     }
 
     private function product_exists($sku) {
@@ -174,7 +166,9 @@ class WC_CSV_Product_Handler {
                     $min_length = min(strlen($group_data['common_name']), strlen($name));
                     if ($common_part && strlen($common_part) >= 0.6 * $min_length) {
                         $variation_groups[$group_id]['common_name'] = $common_part;
+
                         $matched_group = $group_id;
+                        $variation_groups[$group_id]['values'][] = str_replace($common_part, '', $name);
                         break;
                     }
                 }
@@ -185,8 +179,9 @@ class WC_CSV_Product_Handler {
                     $new_group_id = 'auto_' . md5($name);
                     $variation_groups[$new_group_id] = [
                         'common_name' => $name,
-                        'variations' => [$product_data]
+                        'variations' => [$product_data]                        
                     ];
+                    $variation_groups[$group_id]['values'] = [];                    
                 }
             }
         }
@@ -244,28 +239,79 @@ class WC_CSV_Product_Handler {
             }
             
             $product->save();
-            $existing_product_id = $product->get_id();
+            //$existing_product_id = $product->get_id();
         }else{
-            update_post_meta($existing_product_id, '_sku', $sku);
-                        
+            $product = wc_get_product($existing_product_id);
+        }
+        //else{
             // Remove existing variations
-            $this->remove_existing_variations($existing_product_id);
+           //$product = $this->remove_existing_variations($existing_product_id);
 
+       // }
+
+        $attributes_variations_data = $this->extract_attributes($product, $variable_data['variations']);
+        return $this->create_product_attributes_and_variations($existing_product_id, $attributes_variations_data['attributes'], $attributes_variations_data['variations']);
+    }
+
+    private function extract_attributes($product, $variation_products){
+        $attributes = ["details" => array()];
+        $variations = [];
+        foreach ($variation_products as $variation_data) {
+            $suffixe_part = str_replace($product->get_name(), '', $variation_data['name']);
+            $extracted = $this->extract_attribute_from_common_name($suffixe_part);
+            $variation_attributes = [];
+
+            if($extracted !== false && !empty($extracted['attribute']) && !empty($extracted['common_name'])){
+               $attr = $extracted['attribute']; 
+               if(!array_key_exists($attr, $attributes)){
+                 $attributes[$attr] = array($extracted['common_name']);
+                 $variation_attributes[$attr] = $extracted['common_name'];
+               }else{
+                 if(!in_array($extracted['common_name'], $attributes[$attr])){
+                    $attributes[$attr][] = $extracted['common_name'];
+                    $variation_attributes[$attr] = $extracted['common_name'];
+                 }
+               }
+            }else{
+                if(!in_array($suffixe_part, $attributes['details'])){
+                    $attributes['details'][] = $suffixe_part;
+                    $variation_attributes['details'] = $suffixe_part;
+                }
+            }
+
+            $variations[] = array(
+            'attributes' => $variation_attributes,
+            'data' => $variation_data
+            );
+           
         }
-       
-        
-        foreach ($variable_data['variations'] as $variation_data) {
-            return $this->import_variation($existing_product_id, $variation_data, $variable_data['name']);
+
+        $attr_results = [];
+        $compteur = 0;
+    
+
+        foreach($attributes as $key => $values){
+            $attr_results[] = array(
+                'name' => $key,
+                'label' => $key,
+                'values' => implode('|', $values),
+                'position' => $compteur,
+                'visible' => 1,
+                'variation' => 1
+            );
+            $compteur++;
         }
-        return ["good" => "variable imported"];
+
+        return ["attributes" => $attr_results, "variations" => $variations];
+
     }
 
     private function extract_attribute_from_common_name($common_name) {
-        $attribute_keywords = ['taille', 'couleur', 'format', 'poids']; // Extend as needed
+        $attribute_keywords = ['taille', 'couleur', 'format', 'poids', 'Talla']; // Extend as needed
         
         foreach ($attribute_keywords as $keyword) {
             if (stripos($common_name, $keyword) !== false) {
-                $cleaned_name = trim(str_ireplace($keyword, '', $common_name));
+                $cleaned_name = wc_clean(trim(str_ireplace($keyword, '', $common_name)));
                 return [
                     'common_name' => $cleaned_name,
                     'attribute' => ucfirst($keyword)
@@ -374,7 +420,7 @@ class WC_CSV_Product_Handler {
         $product->save();      
     }
 
-    private function import_variation($product_id, $product_data, $common_name) {
+    private function import_variation($product_id, $product_data) {
         $variation = new WC_Product_Variation();
         $variation->set_parent_id($product_id);
         $variation->set_sku($product_data['sku']);
@@ -389,47 +435,7 @@ class WC_CSV_Product_Handler {
         $variation->set_stock_quantity((int) $product_data['available_stock']);
         $variation->set_stock_status((string) $product_data['stock_status']);
 
-        $attributes = [];
-        $xml = simplexml_load_string($product_data['variations_info_xml']);
-        if (!$xml) {
-            $extracted = $this->extract_attribute_from_common_name($product_data['name']);
-            //return ["extracted" => $extracted, "name" => $product_data['name']];
-
-            $var_attributes = array();   
-            if($extracted === false){               
-                $var_groupname = 'details';
-                $var_name = "details";
-                $var_value = str_replace($common_name, '', $product_data['name']);
-                
-            }else{
-                $var_value = trim(str_replace($common_name, '', $product_data['name']));//important de prendre cette valeur avant de changer la valeur du common_name
-                $common_name = $extracted["common_name"];
-                $var_groupname = $extracted["attribute"];
-                $var_name = $var_groupname;
-            }
-
-            return ["common_name", $common_name, "var_group" => $var_groupname, "var_name" => $var_name, "value" => $var_value];
-            $var_attributes[$var_name] = $var_value;
-            $variation->set_attributes($var_attributes);
-        }else{
-            foreach ($xml->variant as $variant) {
-                $var_attributes = [];
-                for ($i = 1; $i <= 3; $i++) {
-                    $var_groupname = (string) $variant->{'var_groupname_' . $i};
-                    $var_name = (string) $variant->{'var_name_' . $i};
-                    $var_value = (string) $variant->{'var_value_' . $i};
-                    
-                    if (!empty($var_groupname) && !empty($var_name) && !empty($var_value)) {
-                        $attributes[$var_name] = $var_groupname;
-                        $var_attributes[$var_name] = $var_value;
-                    }
-                }
-                return ["var_attributes" => $var_attributes, "attributes" => $attributes];
-                
-                $variation->set_attributes($var_attributes);
-            }
-        }
-            
+           
         // Assign categories
         if (!empty($product_data['main_category'])) {
             $category_ids = $this->create_and_assign_categories($product_data['main_category']);
@@ -497,13 +503,7 @@ class WC_CSV_Product_Handler {
 
         $variation->save();
         
-        return ["details" => "variation saved", "variation_name" => $variation->get_name(), "variation_id" => $variation_id, "attributes" => $attributes];
-
-        // Assign attributes to the parent variable product
-        $product = wc_get_product($product_id);
-        $product->set_name($common_name);
-        $product->set_attributes($this->prepare_variation_attributes($attributes));
-        $product->save();
+        return $variation_id;
     }
 
     private function prepare_variation_attributes($attributes) {
@@ -707,5 +707,143 @@ class WC_CSV_Product_Handler {
         }
 
         return $text;
+    }
+
+   /**
+     * Create product attributes and variations from CSV data
+     * Skips variations that already exist with the same attributes
+     * 
+     * @param int $product_id The parent variable product ID
+     * @param array $attributes_data Array of attribute data from CSV
+     * @param array $variations_data Array of variation data from CSV
+     * @return array Results with counts of created and skipped variations
+     */
+    function create_product_attributes_and_variations($product_id, $attributes_data, $variations_data) {
+        // Results tracking
+        $results = array(
+            'created' => 0,
+            'skipped' => 0,
+            'errors' => 0
+        );
+        
+        // Get the product
+        $product = wc_get_product($product_id);
+        
+        if (!$product || $product->get_type() !== 'variable') {
+            wp_die('Invalid product or not a variable product: '.$product_id);
+        }
+        
+        // 1. Set up product attributes
+        $product_attributes = array();
+        
+        foreach ($attributes_data as $attribute) {
+            $attribute_name = sanitize_title($attribute['name']); // e.g. 'color'
+            $attribute_label = wc_clean($attribute['label']); // e.g. 'Color'
+            $attribute_values = explode('|', $attribute['values']); // e.g. 'Red|Blue|Green'
+            
+            // Trim values
+            $attribute_values = array_map('wc_clean', $attribute_values);
+            
+            // Format for storing
+            $product_attributes['pa_' . $attribute_name] = array(
+                'name'         => 'pa_' . $attribute_name, // Taxonomy
+                'value'        => '', 
+                'position'     => isset($attribute['position']) ? absint($attribute['position']) : 0,
+                'is_visible'   => isset($attribute['visible']) ? 1 : 0,
+                'is_variation' => isset($attribute['variation']) ? 1 : 0,
+                'is_taxonomy'  => 1
+            );
+            
+            // Create or update the attribute taxonomy if it doesn't exist
+            if (!taxonomy_exists('pa_' . $attribute_name)) {
+                register_taxonomy(
+                    'pa_' . $attribute_name,
+                    'product',
+                    array(
+                        'label'        => $attribute_label,
+                        'hierarchical' => false,
+                        'show_ui'      => true,
+                        'query_var'    => true,
+                    )
+                );
+            }
+            
+            // Create terms for attribute values
+            foreach ($attribute_values as $term_name) {
+                $term = get_term_by('name', $term_name, 'pa_' . $attribute_name);
+                
+                if (!$term) {
+                    wp_insert_term($term_name, 'pa_' . $attribute_name);
+                }
+                
+                // Link attribute values to the product
+                wp_set_object_terms(
+                    $product_id, 
+                    $term_name, 
+                    'pa_' . $attribute_name, 
+                    true
+                );
+            }
+        }
+        
+        // Save product attributes
+        update_post_meta($product_id, '_product_attributes', $product_attributes);
+        
+        // 2. Get existing variations to check against
+        $existing_variations = array();
+        $product_variations = $product->get_children();
+        
+        foreach ($product_variations as $variation_id) {
+            $variation = wc_get_product($variation_id);
+            $variation_attributes = array();
+            
+            // Get the attributes for this variation
+            foreach ($attributes_data as $attribute) {
+                $attribute_name = sanitize_title($attribute['name']);
+                $meta_key = 'attribute_pa_' . $attribute_name;
+                $attribute_value = get_post_meta($variation_id, $meta_key, true);
+                
+                if ($attribute_value) {
+                    $variation_attributes[$attribute_name] = $attribute_value;
+                }
+            }
+            
+            // Create a key based on attributes for comparison
+            $attribute_key = json_encode($variation_attributes);
+            $existing_variations[$attribute_key] = $variation_id;
+        }
+        
+        // 3. Create variations
+        foreach ($variations_data as $variation) {
+            // Prepare a key to check for existing variations
+            $variation_attribute_values = array();
+            foreach ($variation['attributes'] as $attribute_name => $attribute_value) {
+                $variation_attribute_values[$attribute_name] = sanitize_title($attribute_value);
+            }
+            
+            // Check if this combination of attributes already exists
+            $attribute_key = json_encode($variation_attribute_values);
+            
+            if (isset($existing_variations[$attribute_key])) {
+                // Variation already exists, skip it or optionally update it
+                $results['skipped']++;
+                continue;
+            }
+
+            $variation_id = $this->import_variation($product_id, $variation['data']);
+            
+            // Set variation attributes
+            foreach ($variation['attributes'] as $attribute_name => $attribute_value) {
+                $attribute_key = 'attribute_pa_' . sanitize_title($attribute_name);
+                update_post_meta($variation_id, $attribute_key, sanitize_title($attribute_value));
+            }
+            
+            
+            $results['created']++;
+        }        
+        // Make sure to sync variations with the parent product
+        WC_Product_Variable::sync($product_id);
+        
+        return $results;
     }
 }
