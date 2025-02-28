@@ -77,6 +77,11 @@ class WC_CSV_Product_Handler {
                     }
                 }
 
+                return [
+                    'name' => $data["common_name"],                        
+                    'variations' => $data['variations']
+                ];
+
                 // Create new variable product                    
                 return  $this->import_variable_product($variable_sku, [
                     'name' => $data["common_name"],                        
