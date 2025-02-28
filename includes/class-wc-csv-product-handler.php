@@ -216,12 +216,12 @@ class WC_CSV_Product_Handler {
         $existing_product_id = wc_get_product_id_by_sku($sku);
         if (!$existing_product_id) {            
             $product = new WC_Product_Variable();
-            $before = $variable_data['name'];
+            //$before = $variable_data['name'];
             $extract = $this->extract_attribute_from_common_name($variable_data['name']);
-            $after = $variable_data['name'];
-            return ["before" => $before, "extract" => $extract, "after" => $after];
+            //$after = $variable_data['name'];
+            //return ["before" => $before, "extract" => $extract, "after" => $after];
 
-            $product->set_name($extract['common_name']);
+            $product->set_name($extract !== false ? $extract['common_name'] : $variable_data['name']);
             $product->set_sku($sku);
             
             // Assign main image from first variation
