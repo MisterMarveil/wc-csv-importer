@@ -148,7 +148,6 @@ class WC_CSV_Product_Handler {
             }
 
             if ($item_group_id) {
-                return array("item_group_id" => $item_group_id);
                 // If item_group_id exists, group by it directly
                 if (!isset($variation_groups[$item_group_id])) {
                     $variation_groups[$item_group_id] = [
@@ -158,7 +157,6 @@ class WC_CSV_Product_Handler {
                 }
                 $variation_groups[$item_group_id]['variations'][] = $product_data;
             } else {
-                return array("try" => false);
                 // Try to infer variations by comparing product names
                 $matched_group = null;
                 foreach ($variation_groups as $group_id => $group_data) {
@@ -174,6 +172,8 @@ class WC_CSV_Product_Handler {
                         break;
                     }
                 }
+                return array("try" => true);
+                
                 
                 if ($matched_group) {
                     $variation_groups[$matched_group]['variations'][] = $product_data;
