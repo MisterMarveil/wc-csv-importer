@@ -56,7 +56,6 @@ class WC_CSV_Product_Handler {
         
         // Step 2: Detect Variations and Prepare Variable Products
         foreach ($products_by_category as $category => $products) {
-            return array("_good_" => true, "products" => $products);
             $detected_variations = $this->detect_variations($products); 
         
             return array("_good_" => true, "detected" => $detected_variations);
@@ -149,6 +148,7 @@ class WC_CSV_Product_Handler {
             }
 
             if ($item_group_id) {
+                return array("item_group_id" => $item_group_id);
                 // If item_group_id exists, group by it directly
                 if (!isset($variation_groups[$item_group_id])) {
                     $variation_groups[$item_group_id] = [
@@ -158,6 +158,7 @@ class WC_CSV_Product_Handler {
                 }
                 $variation_groups[$item_group_id]['variations'][] = $product_data;
             } else {
+                return array("try" => false);
                 // Try to infer variations by comparing product names
                 $matched_group = null;
                 foreach ($variation_groups as $group_id => $group_data) {
