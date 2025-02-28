@@ -180,8 +180,7 @@ class WC_CSV_Product_Handler {
                     $variation_groups[$new_group_id] = [
                         'common_name' => $name,
                         'variations' => [$product_data]                        
-                    ];
-                    $variation_groups[$group_id]['values'] = [];                    
+                    ];                   
                 }
             }
         }
