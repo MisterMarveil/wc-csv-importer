@@ -744,25 +744,47 @@ class WC_CSV_Product_Handler {
         $product_attributes = array();
         
         foreach ($attributes_data as $attribute) {
-            $attribute_name = sanitize_title($attribute['name']); // e.g. 'color'
+            //$attribute_name = sanitize_title($attribute['name']); // e.g. 'color'
             $attribute_label = wc_clean($attribute['label']); // e.g. 'Color'
             $attribute_values = explode('|', $attribute['values']); // e.g. 'Red|Blue|Green'
             
             // Trim values
             $attribute_values = array_map('wc_clean', $attribute_values);
+
+            $taxonomy = 'pa_' . sanitize_title($attribute['name']);
+            if (!taxonomy_exists($taxonomy)) {
+                register_taxonomy($taxonomy, 'product', [
+                    'label' => ucfirst($attribute_label),
+                    'rewrite' => false,
+                    'hierarchical' => false,
+                ]);
+            }
+
+            foreach ($attribute_values as $value) {
+                if (!term_exists($value, $taxonomy)) {
+                    wp_insert_term($value, $taxonomy);
+                }
+
+                wp_set_object_terms(
+                    $product_id, 
+                    $value, 
+                    $taxonomy, 
+                    true
+                );
+            }
             
             // Format for storing
-            $product_attributes['pa_' . $attribute_name] = array(
-                'name'         => 'pa_' . $attribute_name, // Taxonomy
-                'value'        => '', 
+            $product_attributes[$taxonomy] = array(
+                'name'         => wc_attribute_label($taxonomy), // Taxonomy
+                'value'        => $attribute['values'], 
                 'position'     => isset($attribute['position']) ? absint($attribute['position']) : 0,
-                'is_visible'   => isset($attribute['visible']) ? 1 : 0,
-                'is_variation' => isset($attribute['variation']) ? 1 : 0,
+                'is_visible'   => 1,
+                'is_variation' => 1,
                 'is_taxonomy'  => 1
             );
             
             // Create or update the attribute taxonomy if it doesn't exist
-            if (!taxonomy_exists('pa_' . $attribute_name)) {
+           /* if (!taxonomy_exists('pa_' . $attribute_name)) {
                 register_taxonomy(
                     'pa_' . $attribute_name,
                     'product',
@@ -773,10 +795,10 @@ class WC_CSV_Product_Handler {
                         'query_var'    => true,
                     )
                 );
-            }
+            }*/
             
             // Create terms for attribute values
-            foreach ($attribute_values as $term_name) {
+            /*foreach ($attribute_values as $term_name) {
                 $term = get_term_by('name', $term_name, 'pa_' . $attribute_name);
                 
                 if (!$term) {
@@ -787,10 +809,10 @@ class WC_CSV_Product_Handler {
                 wp_set_object_terms(
                     $product_id, 
                     $term_name, 
-                    'pa_' . $attribute_name, 
+                    $taxonomy, 
                     true
                 );
-            }
+            }*/
         }
         
         // Save product attributes
@@ -821,7 +843,7 @@ class WC_CSV_Product_Handler {
         }
         
         // 3. Create variations
-        foreach ($variations_data as $variation) {
+        /*foreach ($variations_data as $variation) {
             // Prepare a key to check for existing variations
             $variation_attribute_values = array();
             foreach ($variation['attributes'] as $attribute_name => $attribute_value) {
@@ -849,7 +871,7 @@ class WC_CSV_Product_Handler {
             $results['created']++;
         }        
         // Make sure to sync variations with the parent product
-        WC_Product_Variable::sync($product_id);
+        WC_Product_Variable::sync($product_id);*/
         
         return $results;
     }
