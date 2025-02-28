@@ -56,6 +56,7 @@ class WC_CSV_Product_Handler {
         
         // Step 2: Detect Variations and Prepare Variable Products
         foreach ($products_by_category as $category => $products) {
+            return array("_good_" => true, "products" => $products);
             $detected_variations = $this->detect_variations($products); 
         
             return array("_good_" => true, "detected" => $detected_variations);
