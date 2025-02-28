@@ -37,7 +37,6 @@ class WC_CSV_Product_Handler {
         }        
         $this->lock();*/
 
-        return array("good" => true);
         $products_by_category = [];     
         $variationSkus = []; 
     
@@ -54,11 +53,12 @@ class WC_CSV_Product_Handler {
         }
         
 
+        
         // Step 2: Detect Variations and Prepare Variable Products
         foreach ($products_by_category as $category => $products) {
             $detected_variations = $this->detect_variations($products); 
         
-           
+            return array("_good_" => true, "detected" => $detected_variations);
             foreach ($detected_variations as $group_id => $data) {                                                        
                 $sku_list = array_column($data['variations'], 'sku');                
                 $variable_sku = implode('.', $sku_list);
