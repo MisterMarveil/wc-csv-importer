@@ -172,8 +172,6 @@ class WC_CSV_Product_Handler {
                         break;
                     }
                 }
-                return array("try" => true);
-                
                 
                 if ($matched_group) {
                     $variation_groups[$matched_group]['variations'][] = $product_data;
@@ -188,6 +186,9 @@ class WC_CSV_Product_Handler {
             }
         }
 
+        return array("try_anoter" => true);
+                
+                
         foreach($variation_groups as $groupId => $group){
             if(count($group['variations']) <= 1){
                 unset($variation_groups[$groupId]);
