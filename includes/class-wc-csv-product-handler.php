@@ -792,7 +792,6 @@ class WC_CSV_Product_Handler {
                 );
             }
         }
-        return ["attributes" => $product_attributes];
         
         // Save product attributes
         update_post_meta($product_id, '_product_attributes', $product_attributes);
