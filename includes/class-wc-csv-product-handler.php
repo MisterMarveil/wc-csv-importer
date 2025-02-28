@@ -243,7 +243,7 @@ class WC_CSV_Product_Handler {
             }
             
             $product->save();
-            //$existing_product_id = $product->get_id();
+            $existing_product_id = $product->get_id();
         }else{
             $product = wc_get_product($existing_product_id);
         }
