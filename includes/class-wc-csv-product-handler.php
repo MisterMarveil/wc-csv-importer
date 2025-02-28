@@ -185,10 +185,7 @@ class WC_CSV_Product_Handler {
                 }
             }
         }
-
-        return array("try_anoter" => true);
-                
-                
+      
         foreach($variation_groups as $groupId => $group){
             if(count($group['variations']) <= 1){
                 unset($variation_groups[$groupId]);
