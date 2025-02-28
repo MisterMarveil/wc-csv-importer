@@ -237,6 +237,7 @@ class WC_CSV_Product_Handler {
                     $gallery_images = array_merge($gallery_images, array_slice($images, 0, 2));
                 }
             }
+
             if (!empty($gallery_images)) {
                 $this->set_product_gallery($product, $gallery_images);
             }
@@ -263,11 +264,7 @@ class WC_CSV_Product_Handler {
         $variations = [];
         foreach ($variation_products as $variation_data) {
             $suffixe_part = str_replace($product->get_name(), '', $variation_data['name']);
-            return [
-                "suffixe" => $suffixe_part,
-                "name" => $product->get_name(),
-                "variation" => $variation_data['name']
-            ];
+           
             $extracted = $this->extract_attribute_from_common_name($suffixe_part);
             $variation_attributes = [];
 
