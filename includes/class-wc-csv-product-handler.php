@@ -250,6 +250,8 @@ class WC_CSV_Product_Handler {
        // }
 
         $attributes_variations_data = $this->extract_attributes($product, $variable_data['variations']);
+        return array("att_var_data" => $attributes_variations_data);
+
         return $this->create_product_attributes_and_variations($existing_product_id, $attributes_variations_data['attributes'], $attributes_variations_data['variations']);
     }
 
