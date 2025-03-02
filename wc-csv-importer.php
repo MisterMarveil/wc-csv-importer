@@ -5,6 +5,10 @@
  * Version: 1.0
  * Author: Merveil EWONI <BRIDGE SOLUTIONS LTD>
  * License: GPL2
+ * Text Domain: wc-csv-importer
+ * Domain Path: /languages
+ * Author URI: https://bridge-cm.com/
+ * Requires Plugins: woocommerce
  */
 
 if (!defined('ABSPATH')) {
@@ -36,6 +40,35 @@ function wc_csv_importer_init() {
     new WC_CSV_Importer();
 }
 add_action('plugins_loaded', 'wc_csv_importer_init');
+
+/**
+ * Require woocommerce admin message.
+ *
+ * @return void
+ */
+function wc_csv_importer_missing_wc_notice() {
+
+	if ( ! class_exists( 'WooCommerce' ) ) {
+
+		$args = array(
+			'tab'       => 'plugin-information',
+			'plugin'    => 'woocommerce',
+			'TB_iframe' => 'true',
+			'width'     => '640',
+			'height'    => '500',
+		);
+
+		printf(
+			'<div class="%1$s"><p>%2$s <a class="thickbox open-plugin-details-modal" href="%3$s"><strong>%4$s</strong></a></p></div>',
+			'notice notice-error',
+			wp_kses( __( '<strong>WooCommerce CSV Importer</strong> is an add-on of ', 'wc-csv-importer' ), array( 'strong' => array() ) ),
+			esc_url( add_query_arg( $args, admin_url( 'plugin-install.php' ) ) ),
+			esc_html__( 'WooCommerce', 'wc-csv-importer' )
+		);
+	}
+}
+
+add_action( 'admin_notices', 'wc_csv_importer_missing_wc_notice' );
 
 
 // Activation du plugin

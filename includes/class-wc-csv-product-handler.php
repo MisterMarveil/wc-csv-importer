@@ -256,7 +256,8 @@ class WC_CSV_Product_Handler {
         $attributes_variations_data = $this->extract_attributes($product, $variable_data['variations']);
         //return array("att_var_data" => $attributes_variations_data);
 
-        return $this->create_product_attributes_and_variations($existing_product_id, $attributes_variations_data['attributes'], $attributes_variations_data['variations']);
+        return $this->product_save_attributes($existing_product_id, $attributes_variations_data['attributes']);
+        //return $this->create_product_attributes_and_variations($existing_product_id, $attributes_variations_data['attributes'], $attributes_variations_data['variations']);
     }
 
     private function extract_attributes($product, $variation_products){
@@ -875,4 +876,64 @@ class WC_CSV_Product_Handler {
         
         return $results;
     }
+
+    private function product_save_attributes($post_id, $attributes_data) {
+        // Get the product
+        $product = wc_get_product($post_id);
+        
+        if (!$product || $product->get_type() !== 'variable') {
+            wp_die('Invalid product or not a variable product: '.$post_id);
+        }
+       
+        $attributes = array();
+        foreach ($attributes_data as $attribute) {
+            $attribute_name = sanitize_title($attribute['name']); // e.g. 'color'
+            $attribute_label = wc_clean($attribute['label']); // e.g. 'Color'
+            $attribute_position = isset($attribute['position']) ? absint($attribute['position']) : 0; // e.g
+            $attribute_values = explode('|', $attribute['values']); // e.g. 'Red|Blue|Green'
+            
+            // Trim values
+            $attribute_values = array_map('wc_clean', $attribute_values);
+            $attribute_id = 0;
+                
+            // Vérification si l'attribut est taxonomique
+            if (substr($attribute_name, 0, 3) === 'pa_') {
+                $attribute_id = wc_attribute_taxonomy_id_by_name($attribute_name);
+            }
+                
+            // Création de l'objet attribut
+            $attribute = new WC_Product_Attribute();
+            $attribute->set_id($attribute_id);
+            $attribute->set_name($attribute_name);
+            $attribute->set_position($attribute_position);
+            $attribute->set_visible(1);
+            $attribute->set_variation(1);
+                
+            // Traitement des valeurs d'attribut
+            if ($attribute_id) {
+                // Pour les attributs taxonomiques
+                $options = array();
+                
+                foreach ($attribute_values as $value) {
+                    if ($term = get_term_by('name', $value, $attribute_name)) {
+                        $options[] = $term->term_id;
+                    } else {
+                        $term = wp_insert_term($value, $attribute_name);
+                        $options[] = $term['term_id'];
+                    }
+                }                
+                $attribute->set_options($options);
+            } else {
+                // Pour les attributs personnalisés
+                $attribute->set_options($attribute_values);
+            }
+            
+            $attributes[] = $attribute;
+            
+        }
+        
+        $product->set_attributes($attributes);
+        $product->save();
+        //wp_die();
+    }    
 }
