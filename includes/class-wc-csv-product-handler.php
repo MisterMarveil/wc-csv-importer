@@ -935,5 +935,89 @@ class WC_CSV_Product_Handler {
         $product->set_attributes($attributes);
         $product->save();
         //wp_die();
-    }    
+    } 
+    
+    /**
+     * Save product variations via ajax.
+     */
+    public static function save_variations($product_id, $variations_data) {        
+        // Traitement des données de variation
+        $product = wc_get_product($product_id);
+        
+        if (!$product || $product->get_type() !== 'variable') {
+            wp_die('Invalid product or not a variable product: '.$post_id);
+        }
+        
+        // Traitement des variations
+        // Cette partie traiterait des tableaux comme variable_post_id, variable_sku, etc.
+        
+        // Préparation des variations pour enregistrement
+        $variations = array();
+        foreach ($variations_data as $variation){
+            
+        }
+        
+        // Exemple de traitement des données de variation
+        if (isset($_POST['variable_post_id'])) {
+            $variable_post_ids = isset($_POST['variable_post_id']) ? $_POST['variable_post_id'] : array();
+            $max_loop = max(array_keys($variable_post_ids));
+            
+            for ($i = 0; $i <= $max_loop; $i++) {
+                if (!isset($variable_post_ids[$i])) {
+                    continue;
+                }
+                
+                $variation_id = absint($variable_post_ids[$i]);
+                $variation = wc_get_product($variation_id);
+                
+                // Si la variation n'existe pas encore, on la crée
+                if (!$variation) {
+                    $variation = new WC_Product_Variation();
+                    $variation->set_parent_id($product_id);
+                }
+                
+                // Mise à jour des propriétés de la variation
+                if (isset($_POST['variable_enabled'][$i])) {
+                    $variation->set_status('publish');
+                } else {
+                    $variation->set_status('private');
+                }
+                
+                // Définition des attributs
+                if (isset($_POST['attribute_details'][$i])) {
+                    $variation_attributes = array();
+                    $attributes = $product->get_attributes();
+                    
+                    foreach ($attributes as $attribute) {
+                        $attribute_key = sanitize_title($attribute->get_name());
+                        $attribute_value = isset($_POST["attribute_{$attribute_key}"][$i]) ? wc_clean(wp_unslash($_POST["attribute_{$attribute_key}"][$i])) : '';
+                        
+                        $variation_attributes[$attribute_key] = $attribute_value;
+                    }
+                    
+                    $variation->set_attributes($variation_attributes);
+                }
+                
+                // Définition des autres propriétés
+                if (isset($_POST['variable_sku'][$i])) {
+                    $variation->set_sku(wc_clean(wp_unslash($_POST['variable_sku'][$i])));
+                }
+                
+                if (isset($_POST['variable_regular_price'][$i])) {
+                    $variation->set_regular_price(wc_clean(wp_unslash($_POST['variable_regular_price'][$i])));
+                }
+                
+                // ... autres propriétés similaires
+                
+                // Sauvegarde de la variation
+                $variation->save();
+            }
+        }
+        
+        // Mise à jour du produit parent
+        WC_Product_Variable::sync($product_id);
+        
+        wp_die();
+    }
+
 }
