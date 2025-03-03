@@ -256,7 +256,8 @@ class WC_CSV_Product_Handler {
         $attributes_variations_data = $this->extract_attributes($product, $variable_data['variations']);
         //return array("att_var_data" => $attributes_variations_data);
 
-        return $this->product_save_attributes($existing_product_id, $attributes_variations_data['attributes']);
+        $this->product_save_attributes($existing_product_id, $attributes_variations_data['attributes']);
+        return $this->product_save_variations($existing_product_id, $attributes_variations_data['variations']);
         //return $this->create_product_attributes_and_variations($existing_product_id, $attributes_variations_data['attributes'], $attributes_variations_data['variations']);
     }
 
@@ -428,22 +429,23 @@ class WC_CSV_Product_Handler {
         $product->save();      
     }
 
-    private function import_variation($product_id, $product_data) {
-        $variation = new WC_Product_Variation();
-        $variation->set_parent_id($product_id);
-        $variation->set_sku($product_data['sku']);
-        $variation->set_name($product_data['name']);
-        $variation->set_description($product_data['html_description']);
-        $variation->set_short_description($product_data['description']);
-        //$variation->set_min_purchase_quantity($product_data['minimum_units_per_order']);
-        $variation->set_regular_price((string) $product_data['recommended_sale_price']);
+    private function enrich_variation($variation, $product_data) {
+        if(isset(($product_data['sku'])))
+            $variation->set_sku($product_data['sku']);
 
-        
-        $variation->set_manage_stock(true);
-        $variation->set_stock_quantity((int) $product_data['available_stock']);
-        $variation->set_stock_status((string) $product_data['stock_status']);
+        if(isset(($product_data['name'])))
+            $variation->set_name($product_data['name']);
 
-           
+        if(isset(($product_data['html_description'])))
+            $variation->set_description($product_data['html_description']);
+
+        if(isset(($product_data['description'])))
+            $variation->set_short_description($product_data['description']);
+
+        if(isset(($product_data['recommended_sale_price'])))
+            $variation->set_regular_price((string) $product_data['recommended_sale_price']);
+
+            
         // Assign categories
         if (!empty($product_data['main_category'])) {
             $category_ids = $this->create_and_assign_categories($product_data['main_category']);
@@ -509,8 +511,6 @@ class WC_CSV_Product_Handler {
             update_post_meta($variation_id, '_min_units_per_order', (int)$product_data['minimum_units_per_order']);
         }
 
-        $variation->save();
-        
         return $variation_id;
     }
 
@@ -717,166 +717,6 @@ class WC_CSV_Product_Handler {
         return $text;
     }
 
-   /**
-     * Create product attributes and variations from CSV data
-     * Skips variations that already exist with the same attributes
-     * 
-     * @param int $product_id The parent variable product ID
-     * @param array $attributes_data Array of attribute data from CSV
-     * @param array $variations_data Array of variation data from CSV
-     * @return array Results with counts of created and skipped variations
-     */
-    function create_product_attributes_and_variations($product_id, $attributes_data, $variations_data) {
-        // Results tracking
-        $results = array(
-            'created' => 0,
-            'skipped' => 0,
-            'errors' => 0
-        );
-        
-        // Get the product
-        $product = wc_get_product($product_id);
-        
-        if (!$product || $product->get_type() !== 'variable') {
-            wp_die('Invalid product or not a variable product: '.$product_id);
-        }
-        
-        // 1. Set up product attributes
-        $product_attributes = array();
-        
-        foreach ($attributes_data as $attribute) {
-            //$attribute_name = sanitize_title($attribute['name']); // e.g. 'color'
-            $attribute_label = wc_clean($attribute['label']); // e.g. 'Color'
-            $attribute_values = explode('|', $attribute['values']); // e.g. 'Red|Blue|Green'
-            
-            // Trim values
-            $attribute_values = array_map('wc_clean', $attribute_values);
-
-            $taxonomy = 'pa_' . sanitize_title($attribute['name']);
-            if (!taxonomy_exists($taxonomy)) {
-                register_taxonomy($taxonomy, 'product', [
-                    'label' => ucfirst($attribute_label),
-                    'rewrite' => false,
-                    'hierarchical' => false,
-                ]);
-            }
-
-            foreach ($attribute_values as $value) {
-                if (!term_exists($value, $taxonomy)) {
-                    wp_insert_term($value, $taxonomy);
-                }
-
-                wp_set_object_terms(
-                    $product_id, 
-                    $value, 
-                    $taxonomy, 
-                    true
-                );
-            }
-            
-            // Format for storing
-            $product_attributes[$taxonomy] = array(
-                'name'         => wc_attribute_label($taxonomy), // Taxonomy
-                'value'        => $attribute['values'], 
-                'position'     => isset($attribute['position']) ? absint($attribute['position']) : 0,
-                'is_visible'   => 1,
-                'is_variation' => 1,
-                'is_taxonomy'  => 1
-            );
-            
-            // Create or update the attribute taxonomy if it doesn't exist
-           /* if (!taxonomy_exists('pa_' . $attribute_name)) {
-                register_taxonomy(
-                    'pa_' . $attribute_name,
-                    'product',
-                    array(
-                        'label'        => $attribute_label,
-                        'hierarchical' => false,
-                        'show_ui'      => true,
-                        'query_var'    => true,
-                    )
-                );
-            }*/
-            
-            // Create terms for attribute values
-            /*foreach ($attribute_values as $term_name) {
-                $term = get_term_by('name', $term_name, 'pa_' . $attribute_name);
-                
-                if (!$term) {
-                    wp_insert_term($term_name, 'pa_' . $attribute_name);
-                }
-                
-                // Link attribute values to the product
-                wp_set_object_terms(
-                    $product_id, 
-                    $term_name, 
-                    $taxonomy, 
-                    true
-                );
-            }*/
-        }
-        
-        // Save product attributes
-        update_post_meta($product_id, '_product_attributes', $product_attributes);
-        
-        // 2. Get existing variations to check against
-        $existing_variations = array();
-        $product_variations = $product->get_children();
-        
-        foreach ($product_variations as $variation_id) {
-            $variation = wc_get_product($variation_id);
-            $variation_attributes = array();
-            
-            // Get the attributes for this variation
-            foreach ($attributes_data as $attribute) {
-                $attribute_name = sanitize_title($attribute['name']);
-                $meta_key = 'attribute_pa_' . $attribute_name;
-                $attribute_value = get_post_meta($variation_id, $meta_key, true);
-                
-                if ($attribute_value) {
-                    $variation_attributes[$attribute_name] = $attribute_value;
-                }
-            }
-            
-            // Create a key based on attributes for comparison
-            $attribute_key = json_encode($variation_attributes);
-            $existing_variations[$attribute_key] = $variation_id;
-        }
-        
-        // 3. Create variations
-        /*foreach ($variations_data as $variation) {
-            // Prepare a key to check for existing variations
-            $variation_attribute_values = array();
-            foreach ($variation['attributes'] as $attribute_name => $attribute_value) {
-                $variation_attribute_values[$attribute_name] = sanitize_title($attribute_value);
-            }
-            
-            // Check if this combination of attributes already exists
-            $attribute_key = json_encode($variation_attribute_values);
-            
-            if (isset($existing_variations[$attribute_key])) {
-                // Variation already exists, skip it or optionally update it
-                $results['skipped']++;
-                continue;
-            }
-
-            $variation_id = $this->import_variation($product_id, $variation['data']);
-            
-            // Set variation attributes
-            foreach ($variation['attributes'] as $attribute_name => $attribute_value) {
-                $attribute_key = 'attribute_pa_' . sanitize_title($attribute_name);
-                update_post_meta($variation_id, $attribute_key, sanitize_title($attribute_value));
-            }
-            
-            
-            $results['created']++;
-        }        
-        // Make sure to sync variations with the parent product
-        WC_Product_Variable::sync($product_id);*/
-        
-        return $results;
-    }
-
     private function product_save_attributes($post_id, $attributes_data) {
         // Get the product
         $product = wc_get_product($post_id);
@@ -940,12 +780,12 @@ class WC_CSV_Product_Handler {
     /**
      * Save product variations via ajax.
      */
-    public static function save_variations($product_id, $variations_data) {        
+    public function product_save_variations($product_id, $variations_data) {        
         // Traitement des données de variation
         $product = wc_get_product($product_id);
         
         if (!$product || $product->get_type() !== 'variable') {
-            wp_die('Invalid product or not a variable product: '.$post_id);
+            wp_die('Invalid product or not a variable product: '.$product_id);
         }
         
         // Traitement des variations
@@ -953,71 +793,43 @@ class WC_CSV_Product_Handler {
         
         // Préparation des variations pour enregistrement
         $variations = array();
-        foreach ($variations_data as $variation){
-            
-        }
-        
-        // Exemple de traitement des données de variation
-        if (isset($_POST['variable_post_id'])) {
-            $variable_post_ids = isset($_POST['variable_post_id']) ? $_POST['variable_post_id'] : array();
-            $max_loop = max(array_keys($variable_post_ids));
-            
-            for ($i = 0; $i <= $max_loop; $i++) {
-                if (!isset($variable_post_ids[$i])) {
-                    continue;
+         $product_already_variations = $product->get_children();
+        foreach ($variations_data as $variation_data){
+            $variation = null;
+            $data = $variation_data['data'];
+            foreach($product_already_variations as $product_variation){                
+                if(!empty($data['sku']) && $data['sku'] == $product_variation->get_sku()){
+                    $variation = $product_variation;
+                    break;
                 }
-                
-                $variation_id = absint($variable_post_ids[$i]);
-                $variation = wc_get_product($variation_id);
-                
-                // Si la variation n'existe pas encore, on la crée
-                if (!$variation) {
-                    $variation = new WC_Product_Variation();
-                    $variation->set_parent_id($product_id);
-                }
-                
-                // Mise à jour des propriétés de la variation
-                if (isset($_POST['variable_enabled'][$i])) {
-                    $variation->set_status('publish');
-                } else {
-                    $variation->set_status('private');
-                }
-                
-                // Définition des attributs
-                if (isset($_POST['attribute_details'][$i])) {
-                    $variation_attributes = array();
-                    $attributes = $product->get_attributes();
-                    
-                    foreach ($attributes as $attribute) {
-                        $attribute_key = sanitize_title($attribute->get_name());
-                        $attribute_value = isset($_POST["attribute_{$attribute_key}"][$i]) ? wc_clean(wp_unslash($_POST["attribute_{$attribute_key}"][$i])) : '';
-                        
-                        $variation_attributes[$attribute_key] = $attribute_value;
-                    }
-                    
-                    $variation->set_attributes($variation_attributes);
-                }
-                
-                // Définition des autres propriétés
-                if (isset($_POST['variable_sku'][$i])) {
-                    $variation->set_sku(wc_clean(wp_unslash($_POST['variable_sku'][$i])));
-                }
-                
-                if (isset($_POST['variable_regular_price'][$i])) {
-                    $variation->set_regular_price(wc_clean(wp_unslash($_POST['variable_regular_price'][$i])));
-                }
-                
-                // ... autres propriétés similaires
-                
-                // Sauvegarde de la variation
-                $variation->save();
             }
+
+            if(!$variation){
+                $variation = new WC_Product_Variation();
+                $variation->set_parent_id($product_id);
+                $variation->set_status('publish');
+            }
+            
+            $variation_attributes = array();
+            $attributes = $product->get_attributes();
+            $var_attributes = $variation_data['attributes'];
+            
+            foreach ($attributes as $attribute) {
+                $attribute_key = sanitize_title($attribute->get_name());                
+                foreach($var_attributes as $v_attr_key => $v_attr_value){
+                    if($v_attr_key == $attribute_key){
+                        $variation_attributes[$attribute_key] = $v_attr_value;
+                    }
+                }              
+            }
+            $variation->set_attributes($variation_attributes);
+            $this->enrich_variation($variation, $data);
+            $variations[] = $variation;
         }
         
         // Mise à jour du produit parent
         WC_Product_Variable::sync($product_id);
         
-        wp_die();
+        return $variations;
     }
-
 }
