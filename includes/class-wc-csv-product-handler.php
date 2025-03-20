@@ -52,44 +52,67 @@ class WC_CSV_Product_Handler {
             $products_by_category[$category][] = $product_data;
         }
         
+        $insertedGroupIds = array();
+        $insertedGroupsOption = get_option(INSERTED_GROUP_ID, '');
 
+        if(!empty($insertedGroupsOption))
+            $insertedGroupIds = explode("|", $insertedGroupsOption);
         
         // Step 2: Detect Variations and Prepare Variable Products
+        $categoriesCount = count($products_by_category);
+        $compteur = 0;
         foreach ($products_by_category as $category => $products) {
+            $compteur++;
             $detected_variations = $this->detect_variations($products); 
+            $variationGroupsCount = count($detected_variations);
+            $varCount = 0;
         
             //return array("_good_" => true, "detected" => $detected_variations);
-            foreach ($detected_variations as $group_id => $data) {                                                        
-                $sku_list = array_column($data['variations'], 'sku');                
-                $variable_sku = implode('.', $sku_list);
-                $variationSkus = array_merge($variationSkus, $sku_list);
-                
-                // Check if a variable product already exists using SKU LIKE query
-                $existing_product_id = $this->find_existing_variable_product($sku_list);
-                
-                if ($existing_product_id) {
-                    // Fetch existing concatenated SKU
-                    $existing_sku = get_post_meta($existing_product_id, '_sku', true);
-                    
-                    if ($existing_sku !== $variable_sku) {
-                        // SKU changed -> update the variable product
-                        update_post_meta($existing_product_id, '_sku', $variable_sku);                        
-                    }
-                }
+            foreach ($detected_variations as $group_id => $data) {    
+                $varCount++;
 
-                // Create new variable product                    
-                $this->import_variable_product($variable_sku, [
-                    'name' => $data["common_name"],                        
-                    'variations' => $data['variations']
-                ]);
-            
+                if(!in_array($group_id, $insertedGroupIds)){                                                    
+                    $sku_list = array_column($data['variations'], 'sku');                
+                    $variable_sku = implode('.', $sku_list);
+                    $variationSkus = array_merge($variationSkus, $sku_list);
+                    
+                    // Check if a variable product already exists using SKU LIKE query
+                    $existing_product_id = $this->find_existing_variable_product($sku_list);
+                    
+                    if ($existing_product_id) {
+                        // Fetch existing concatenated SKU
+                        $existing_sku = get_post_meta($existing_product_id, '_sku', true);
+                        
+                        if ($existing_sku !== $variable_sku) {
+                            // SKU changed -> update the variable product
+                            update_post_meta($existing_product_id, '_sku', $variable_sku);                        
+                        }
+                    }
+
+                    // Create new variable product                    
+                    $this->import_variable_product($variable_sku, [
+                        'name' => $data["common_name"],                        
+                        'variations' => $data['variations']
+                    ]);
+
+                    $insertedGroupIds[] = $group_id;
+                    update_option(INSERTED_GROUP_ID, implode("|", $insertedGroupIds));
+                    return array(
+                        'is_variation' => true,
+                        'categories_count' => $categoriesCount,
+                        'current' => $compteur,
+                        'current_category_var_groups_count' => $variationGroupsCount,
+                        'current_category_var_group' => $varCount,
+                       'latest_introduced_group_id' => $group_id
+                    );
+                }
             }
             
         }
+        
 
        $csv_data = array_slice($batch, $offset, BATCH_SIZE);
-      return ["data" => $csv_data];
-   
+      
        // Step 3: Import Products
        foreach ($csv_data as $row) {
            $product_data = array_combine($header, $row);
@@ -262,7 +285,7 @@ class WC_CSV_Product_Handler {
     }
 
     private function extract_attributes($product, $variation_products){
-        $attributes = ["details" => array()];
+        $attributes = ["nuances" => array()];
         $variations = [];
         foreach ($variation_products as $variation_data) {
             $suffixe_part = str_replace($product->get_name(), '', $variation_data['name']);
@@ -282,9 +305,9 @@ class WC_CSV_Product_Handler {
                  }
                }
             }else{
-                if(!in_array($suffixe_part, $attributes['details'])){
-                    $attributes['details'][] = $suffixe_part;
-                    $variation_attributes['details'] = $suffixe_part;
+                if(!in_array($suffixe_part, $attributes['nuances'])){
+                    $attributes['nuances'][] = $suffixe_part;
+                    $variation_attributes['nuances'] = $suffixe_part;
                 }
             }
 

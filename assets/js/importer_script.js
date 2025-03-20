@@ -5,7 +5,7 @@ jQuery(document).ready(function($) {
     let maxRetries = 3;
     let retryCount = 0;
 
-    $("#import-progress").percircle();
+    //$("#import-progress").percircle();
     
     $('#start-import').click(function() {
         $('#import-status').html('<p>Initializing import...</p>');
@@ -25,26 +25,28 @@ jQuery(document).ready(function($) {
                 totalRows = response.total_rows;
 
                 $('#import-status').html('<p>File loaded: ' + totalRows + ' products detected.</p>');
-                $("#import-progress").removeClass('hidden');
+                //$("#import-progress").removeClass('hidden');
                 processBatch();
             }
         });
     });
 
-    function processBatch(insertCount = 0, updateCount = 0) {
+    function processBatch() {
         if (offset >= totalRows) {
-            $("#import-progress").addClass('hidden');
+           // $("#import-progress").addClass('hidden');
             $('#import-status').html('<p style="color: green;">Import completed successfully!</p>');
             return;
         }
 
         let percentage = parseInt((offset / (totalRows + 1)) * 100);
-        $("#import-progress").percircle({
+        /*
+            $("#import-progress").percircle({
             text: percentage+"%",
             percent: percentage,
             progressBarColor: percentage < 25 ? "#CC3366" : (percentage < 50 ? "yellow" : (percentage < 75 ? 'orange' : "green"))
           });
-          $('#import-status').html('<p>Actual progress ' + offset + '/'+totalRows+'('+percentage+'%) products detected.</p>');
+        */
+         
         
         $.ajax({
             url: ajaxurl,
@@ -58,17 +60,22 @@ jQuery(document).ready(function($) {
                 if (response.error) {
                     $('#import-status').html('<p style="color: red;">' + response.error + '</p>');
                     return;
+                }else if(response.is_variation) {                    
+                    $('#import-status').html('<p>Inserting variation... Current category: ' + response.current_category + '/' + response.categories_count + " ("+response.latest_introduced_group_id+")"+ '.</p>');
+                }else{
+                     $('#import-status').html('<p>Actual progress ' + response.next_offset + '/'+totalRows+'('+percentage+'%) products detected.</p>');
                 }
-                
+                          
                 offset = response.next_offset;
                 retryCount = 0;
-                $('#import-progress').css('width', (offset / totalRows * 100) + '%');
+                //$('#import-progress').css('width', (offset / totalRows * 100) + '%');
                 
                 if(offset && !isNaN(offset) && offset < totalRows){
-                    processBatch(response.insertCount, response.updateCount);   
+                    processBatch();   
                 }else{
                     console.log('oops! bad offset provided: '+offset);
                 }
+                
             },
             error: function (xhr, textStatus, errorThrown) {
                 console.error("Import Failed:", textStatus, errorThrown);

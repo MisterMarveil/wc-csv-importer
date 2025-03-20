@@ -163,6 +163,19 @@ class WC_CSV_Importer {
         $handler = new WC_CSV_Product_Handler();
         try{
             $result = $handler->import_products($batch, $header, $offset);
+            if(is_array($result) && array_key_exists('is_variation', $result) && $result['is_variation']){
+                wp_send_json([
+                    'completed' => false,
+                    'is_variation' => true,
+                    'categories_count' => $result["categories_count"],
+                    'current_category' => $result['current'],
+                    'current_sub_step_variations_count' => $result["current_category_var_groups_count"],
+                    'current_sub_step_variation' => $result["current_category_var_group"],
+                    'latest_introduced_group_id' => $result["latest_introduced_group_id"],
+                    'next_offset' => $offset
+                ]);
+                wp_die();
+            }
         }catch(\Exception $e){
             $handler->unlock();
             wp_error("oops! something went wrong: ".$e->getMessage());
