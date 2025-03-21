@@ -147,7 +147,7 @@ class WC_CSV_Product_Handler {
         global $wpdb;
         $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->posts} WHERE post_type = 'product_variation' AND post_parent = %d", $product_id));
 
-        return wc_get_product($product_id);           
+        return wc_get_product($product_id);         
     }
 
     private function product_exists($sku) {
@@ -859,6 +859,11 @@ class WC_CSV_Product_Handler {
             $var_id = wc_get_product_id_by_sku($data['sku']);
             if ($var_id) {
                $variation = wc_get_product($var_id);
+               if($variation->is_type('simple')){
+                $variation->delete(true);
+                $variation = null;
+               }
+                
                if($variation->get_parent_id() != $product->get_id())
                     continue;
             }
