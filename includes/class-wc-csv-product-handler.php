@@ -264,11 +264,12 @@ class WC_CSV_Product_Handler {
                     $images = explode('|', $variation['images_csv']);
                     $gallery_images = array_merge($gallery_images, array_slice($images, 0, 2));
                 }
+                 return array("good" => 3, "data" => $variation);
 
                 // Assign brand
                 if (!$isbrandSetted && !empty($variation['brand'])) {
                     $isbrandSetted = true;
-                    return array("good" => 3, "data" => $variation);
+                   
         
                     $brand_ids = $this->create_and_assign_brand_with_hierarchy($variation['brand'], explode("|", $variation["brand_hierarchy"]));
                 }        
