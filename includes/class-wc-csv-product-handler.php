@@ -237,7 +237,6 @@ class WC_CSV_Product_Handler {
     }
 
     private function import_variable_product($sku, $variable_data) {
-        return array("good" => 2, "data" => $variable_data);
         
         $existing_product_id = wc_get_product_id_by_sku($sku);
         if (!$existing_product_id) {            
@@ -269,6 +268,8 @@ class WC_CSV_Product_Handler {
                 // Assign brand
                 if (!$isbrandSetted && !empty($variation['brand'])) {
                     $isbrandSetted = true;
+                    return array("good" => 3, "data" => $variation);
+        
                     $brand_ids = $this->create_and_assign_brand_with_hierarchy($variation['brand'], explode("|", $variation["brand_hierarchy"]));
                 }        
             }
