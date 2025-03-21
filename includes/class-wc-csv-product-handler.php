@@ -854,7 +854,7 @@ class WC_CSV_Product_Handler {
             $variation_attributes = array();
             $attributes = $product->get_attributes();
             $var_attributes = $variation_data['attributes'];
-            
+            return array("good" => 6, "data" => $variations_data);
             foreach ($attributes as $attribute) {
                 $attribute_key = sanitize_title($attribute->get_name());                
                 foreach($var_attributes as $v_attr_key => $v_attr_value){
@@ -867,7 +867,7 @@ class WC_CSV_Product_Handler {
             $this->enrich_variation($variation, $data);
             $variations[] = $variation;
         }
-        return array("good" => 5, "data" => $variations_data);
+        
 
         
         // Mise à jour du produit parent
