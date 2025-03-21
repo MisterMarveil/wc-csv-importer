@@ -239,6 +239,8 @@ class WC_CSV_Product_Handler {
     private function import_variable_product($sku, $variable_data) {
         
         $existing_product_id = wc_get_product_id_by_sku($sku);
+        return array("good" => 3, "data" => $variable_data['variations']);
+
         if (!$existing_product_id) {            
             $product = new WC_Product_Variable();
             //$before = $variable_data['name'];
@@ -248,8 +250,7 @@ class WC_CSV_Product_Handler {
 
             $product->set_name($extract !== false ? $extract['common_name'] : $variable_data['name']);
             $product->set_sku($sku);
-            return array("good" => 3, "data" => $variable_data['variations']);
-
+            
             // Assign main image from first variation
             if (!empty($variable_data['variations'][0]['main_image_url'])) {
                 $this->set_product_image($product, $variable_data['variations'][0]['main_image_url']);
