@@ -863,10 +863,12 @@ class WC_CSV_Product_Handler {
                     }
                 }              
             }
-            return array("good" => 8, "data" => array("product_attr" => $attributes, "variation_attr" => $var_attributes));
             
             $variation->set_attributes($variation_attributes);
+            
             $this->enrich_variation($variation, $data);
+            return array("good" => 9, "data" => array("product_attr" => $attributes, "variation_attr" => $var_attributes));
+           
             $variations[] = $variation;
         }
         
