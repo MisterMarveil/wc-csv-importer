@@ -112,8 +112,7 @@ class WC_CSV_Product_Handler {
         }
         
 
-       $csv_data = array_slice($batch, $offset, BATCH_SIZE);
-       return array("good" => 1, "data" => $csv_data);
+       $csv_data = array_slice($batch, $offset, BATCH_SIZE);      
       
        // Step 3: Import Products
        foreach ($csv_data as $row) {
@@ -258,7 +257,9 @@ class WC_CSV_Product_Handler {
             // Collect up to 2 gallery images from each variation
             $gallery_images = [];
             $isbrandSetted = false;
+            $is_categorized = false;
             $brand_ids = [];
+            $category_ids = [];
 
             foreach ($variable_data['variations'] as $variation) {
                 if (!empty($variation['images_csv'])) {
@@ -268,15 +269,25 @@ class WC_CSV_Product_Handler {
                 
                 // Assign brand
                 if (!$isbrandSetted && !empty($variation['brand'])) {
-                    $isbrandSetted = true;
-                   
+                    $isbrandSetted = true;                  
         
                     $brand_ids = $this->create_and_assign_brand_with_hierarchy($variation['brand'], explode("|", $variation["brand_hierarchy"]));
-                }        
+                }    
+
+                // Assign Categories
+                if(!$is_categorized && !empty($variation['main_category'])){
+                    $category_ids = $this->create_and_assign_categories($variation['main_category']);
+                    $is_categorized = true;
+                }
+                    
             }
 
             if (!empty($gallery_images)) {
                 $this->set_product_gallery($product, $gallery_images);
+            }
+
+            if(!empty($category_ids)){
+                $product->set_category_ids($category_ids);
             }
 
             $product->save();
@@ -483,13 +494,6 @@ class WC_CSV_Product_Handler {
 
         if(isset($product_data['recommended_sale_price']))
             $variation->set_regular_price((string) $product_data['recommended_sale_price']);
-
-            
-        // Assign categories
-        if (!empty($product_data['main_category'])) {
-            $category_ids = $this->create_and_assign_categories($product_data['main_category']);
-            $variation->set_category_ids($category_ids);
-        }
             
         // Set images
         if (!empty($product_data['main_image_url'])) {
@@ -497,6 +501,12 @@ class WC_CSV_Product_Handler {
         }
         if (!empty($product_data['images_csv'])) {
             $this->set_product_gallery($variation, explode('|', $product_data['images_csv']));
+        }
+
+        // Assign categories
+        if (!empty($product_data['main_category'])) {
+            $category_ids = $this->create_and_assign_categories($product_data['main_category']);
+            $variation->set_category_ids($category_ids);
         }
 
         $variation->save();
@@ -518,6 +528,8 @@ class WC_CSV_Product_Handler {
                 wp_set_object_terms( $variation_id, $brand_ids, 'product_brand' );
             }            
         }
+
+        
         
         // Assign EAN code
         if (!empty($product_data['ean'])) {
