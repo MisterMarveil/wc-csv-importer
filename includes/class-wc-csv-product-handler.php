@@ -58,7 +58,6 @@ class WC_CSV_Product_Handler {
         if(!empty($insertedGroupsOption))
             $insertedGroupIds = explode("|", $insertedGroupsOption);
 
-        return array("good" => 0, "data" => $products_by_category);
         
         // Step 2: Detect Variations and Prepare Variable Products
         $categoriesCount = count($products_by_category);
@@ -92,7 +91,7 @@ class WC_CSV_Product_Handler {
                     }
 
                     // Create new variable product                    
-                    $this->import_variable_product($variable_sku, [
+                    return $this->import_variable_product($variable_sku, [
                         'name' => $data["common_name"],                        
                         'variations' => $data['variations']
                     ]);
@@ -238,6 +237,7 @@ class WC_CSV_Product_Handler {
     }
 
     private function import_variable_product($sku, $variable_data) {
+        return array("good" => 2, "data" => $variable_data);
         
         $existing_product_id = wc_get_product_id_by_sku($sku);
         if (!$existing_product_id) {            
