@@ -856,7 +856,6 @@ class WC_CSV_Product_Handler {
             $var_attributes = $variation_data['attributes'];
             foreach ($attributes as $attribute) {
                 $attribute_key = sanitize_title($attribute->get_name());
-                return array("good" => 7, "data" => array("product_attr" => $attribute, "attr_key" => $attribute_key));
                             
                 foreach($var_attributes as $v_attr_key => $v_attr_value){
                     if($v_attr_key == $attribute_key){
@@ -864,6 +863,8 @@ class WC_CSV_Product_Handler {
                     }
                 }              
             }
+            return array("good" => 8, "data" => array("product_attr" => $attributes, "variation_attr" => $var_attributes));
+            
             $variation->set_attributes($variation_attributes);
             $this->enrich_variation($variation, $data);
             $variations[] = $variation;
