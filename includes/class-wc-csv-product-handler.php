@@ -843,6 +843,15 @@ class WC_CSV_Product_Handler {
                 }
             }
 
+            //si ce produit est déjà enregistré en tant que variation d'un autre on saute
+            $var_id = wc_get_product_id_by_sku($data['sku']);
+            if ($var_id) {
+               $variation = wc_get_product($var_id);
+               if($variation->get_parent_id() != $product->get_id())
+                    continue;
+            }
+
+
             if(!$variation){
                 $variation = new WC_Product_Variation();
                 $variation->set_parent_id($product_id);
@@ -851,9 +860,9 @@ class WC_CSV_Product_Handler {
                     try{
                         $variation->set_sku($data['sku']);
                     }catch(Exception $e){
-                        return array("error" => $e->getMessage());
+                        //return array("error" => $e->getMessage());
                     }
-                    return array("good" => 17);
+                    //return array("good" => 17);
                 
                 }
             }
