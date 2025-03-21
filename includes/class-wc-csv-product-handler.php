@@ -248,7 +248,8 @@ class WC_CSV_Product_Handler {
 
             $product->set_name($extract !== false ? $extract['common_name'] : $variable_data['name']);
             $product->set_sku($sku);
-            
+            return array("good" => 3, "data" => $variable_data['variations']);
+
             // Assign main image from first variation
             if (!empty($variable_data['variations'][0]['main_image_url'])) {
                 $this->set_product_image($product, $variable_data['variations'][0]['main_image_url']);
@@ -264,8 +265,7 @@ class WC_CSV_Product_Handler {
                     $images = explode('|', $variation['images_csv']);
                     $gallery_images = array_merge($gallery_images, array_slice($images, 0, 2));
                 }
-                 return array("good" => 3, "data" => $variation);
-
+                
                 // Assign brand
                 if (!$isbrandSetted && !empty($variation['brand'])) {
                     $isbrandSetted = true;
