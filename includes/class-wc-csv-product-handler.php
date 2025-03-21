@@ -246,8 +246,7 @@ class WC_CSV_Product_Handler {
             $extract = $this->extract_attribute_from_common_name($variable_data['name']);
             //$after = $variable_data['name'];
             //return ["before" => $before, "extract" => $extract, "after" => $after];
-            return array("good" => 3, "data" => $extract);
-
+            
             $product->set_name($extract !== false ? $extract['common_name'] : $variable_data['name']);
             $product->set_sku($sku);
             
@@ -287,9 +286,7 @@ class WC_CSV_Product_Handler {
                 wp_set_object_terms( $product->get_id(), $brand_ids, 'product_brand' );   
             }
         }else{
-            $product = wc_get_product($existing_product_id);
-            return array("good" => 4, "data" => $variable_data);
-
+            $product = wc_get_product($existing_product_id);           
         }
         //else{
             // Remove existing variations
@@ -298,7 +295,7 @@ class WC_CSV_Product_Handler {
        // }
        
         $attributes_variations_data = $this->extract_attributes($product, $variable_data['variations']);
-        //return array("att_var_data" => $attributes_variations_data);
+        return array("att_var_data" => $attributes_variations_data);
 
         $this->product_save_attributes($existing_product_id, $attributes_variations_data['attributes']);
         return $this->product_save_variations($existing_product_id, $attributes_variations_data['variations']);
