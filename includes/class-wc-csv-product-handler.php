@@ -112,6 +112,7 @@ class WC_CSV_Product_Handler {
         
 
        $csv_data = array_slice($batch, $offset, BATCH_SIZE);
+       return array("good" => 1, "data" => $csv_data);
       
        // Step 3: Import Products
        foreach ($csv_data as $row) {
