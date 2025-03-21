@@ -471,6 +471,7 @@ class WC_CSV_Product_Handler {
     }
 
     private function enrich_variation($variation, $product_data) {
+        return array("good" => 14, "data" => array("var" => $variation, "data" => $data));
         if(isset($product_data['name']))
             $variation->set_name($product_data['name']);
         
@@ -868,7 +869,7 @@ class WC_CSV_Product_Handler {
             $variation->set_attributes($variation_attributes);            
             $this->enrich_variation($variation, $data);            
            
-            return array("good" => 13, "data" => array("var" => $variation, "data" => $data));
+            
         
 
             $variations[] = $variation;
