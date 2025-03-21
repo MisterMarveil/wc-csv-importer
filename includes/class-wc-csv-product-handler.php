@@ -470,15 +470,13 @@ class WC_CSV_Product_Handler {
         $product->save();      
     }
 
-    private function enrich_variation($variation, $product_data) {
-        return array("good" => 14, "data" => array("var" => $variation, "data" => $data));
+    private function enrich_variation(&$variation, $product_data) {
         if(isset($product_data['name']))
             $variation->set_name($product_data['name']);
         
         if(isset($product_data['html_description']))
             $variation->set_description($product_data['html_description']);
 
-        
 
         if(isset($product_data['description']))
             $variation->set_short_description($product_data['description']);
@@ -849,6 +847,7 @@ class WC_CSV_Product_Handler {
                 $variation = new WC_Product_Variation();
                 $variation->set_parent_id($product_id);
                 $variation->set_status('publish');
+                return array("good" => 18);
                 if(isset($data['sku']))
                     $variation->set_sku($data['sku']);
             }
@@ -869,9 +868,6 @@ class WC_CSV_Product_Handler {
             $variation->set_attributes($variation_attributes);            
             $this->enrich_variation($variation, $data);            
            
-            
-        
-
             $variations[] = $variation;
         }
         
