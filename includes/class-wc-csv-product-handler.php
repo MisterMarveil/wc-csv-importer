@@ -295,9 +295,10 @@ class WC_CSV_Product_Handler {
        // }
        
         $attributes_variations_data = $this->extract_attributes($product, $variable_data['variations']);
-        return array("att_var_data" => $attributes_variations_data);
+        //return array("att_var_data" => $attributes_variations_data);
 
-        $this->product_save_attributes($existing_product_id, $attributes_variations_data['attributes']);
+        $result = $this->product_save_attributes($existing_product_id, $attributes_variations_data['attributes']);
+        return array("data" => $result);
         return $this->product_save_variations($existing_product_id, $attributes_variations_data['variations']);
         //return $this->create_product_attributes_and_variations($existing_product_id, $attributes_variations_data['attributes'], $attributes_variations_data['variations']);
     }
