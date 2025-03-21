@@ -848,7 +848,11 @@ class WC_CSV_Product_Handler {
                 $variation->set_parent_id($product_id);
                 $variation->set_status('publish');
                 if(isset($data['sku'])){
-                    $variation->set_sku($data['sku']);
+                    try{
+                        $variation->set_sku($data['sku']);
+                    }catch(Exception $e){
+                        return array("error" => $e->getMessage());
+                    }
                     return array("good" => 17);
                 
                 }
