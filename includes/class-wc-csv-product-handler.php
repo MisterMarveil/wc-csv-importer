@@ -239,14 +239,14 @@ class WC_CSV_Product_Handler {
     private function import_variable_product($sku, $variable_data) {
         
         $existing_product_id = wc_get_product_id_by_sku($sku);
-        return array("good" => 3, "data" => $variable_data);
-
+        
         if (!$existing_product_id) {            
             $product = new WC_Product_Variable();
             //$before = $variable_data['name'];
             $extract = $this->extract_attribute_from_common_name($variable_data['name']);
             //$after = $variable_data['name'];
             //return ["before" => $before, "extract" => $extract, "after" => $after];
+            return array("good" => 3, "data" => $extract);
 
             $product->set_name($extract !== false ? $extract['common_name'] : $variable_data['name']);
             $product->set_sku($sku);
@@ -288,6 +288,8 @@ class WC_CSV_Product_Handler {
             }
         }else{
             $product = wc_get_product($existing_product_id);
+            return array("good" => 4, "data" => $variable_data);
+
         }
         //else{
             // Remove existing variations
