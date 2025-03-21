@@ -828,9 +828,6 @@ class WC_CSV_Product_Handler {
         if (!$product || $product->get_type() !== 'variable') {
             wp_die('Invalid product or not a variable product: '.$product_id);
         }
-
-        return array("good" => 5, "data" => $variations_data);
-
         
         // Traitement des variations
         // Cette partie traiterait des tableaux comme variable_post_id, variable_sku, etc.
@@ -870,6 +867,8 @@ class WC_CSV_Product_Handler {
             $this->enrich_variation($variation, $data);
             $variations[] = $variation;
         }
+        return array("good" => 5, "data" => $variations_data);
+
         
         // Mise à jour du produit parent
         WC_Product_Variable::sync($product_id);
