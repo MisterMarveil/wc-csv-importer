@@ -866,7 +866,7 @@ class WC_CSV_Product_Handler {
             
             $variation->set_attributes($variation_attributes);
             
-            $this->enrich_variation($variation, $data);
+            //$this->enrich_variation($variation, $data);
             return array("good" => 9, "data" => array("product_attr" => $attributes, "variation_attr" => $var_attributes));
            
             $variations[] = $variation;
