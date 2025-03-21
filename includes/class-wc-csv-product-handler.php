@@ -471,13 +471,14 @@ class WC_CSV_Product_Handler {
     }
 
     private function enrich_variation($variation, $product_data) {
+        if(isset($product_data['name']))
+            $variation->set_name($product_data['name']);
+
       
         return array("good" => 12, "data" => array("var" => $variation, "data" => $product_data));
         
 
-        if(isset($product_data['name']))
-            $variation->set_name($product_data['name']);
-
+        
         if(isset($product_data['html_description']))
             $variation->set_description($product_data['html_description']);
 
@@ -869,8 +870,8 @@ class WC_CSV_Product_Handler {
             
             $variation->set_attributes($variation_attributes);
 
-            if(isset($data['sku']))
-                $variation->set_sku($data['sku']);
+            //if(isset($data['sku']))
+              //  $variation->set_sku($data['sku']);
 
             
             return $this->enrich_variation($variation, $data);
