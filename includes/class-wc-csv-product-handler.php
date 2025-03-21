@@ -57,6 +57,8 @@ class WC_CSV_Product_Handler {
 
         if(!empty($insertedGroupsOption))
             $insertedGroupIds = explode("|", $insertedGroupsOption);
+
+        return array("good" => 0, "data" => $products_by_category);
         
         // Step 2: Detect Variations and Prepare Variable Products
         $categoriesCount = count($products_by_category);
