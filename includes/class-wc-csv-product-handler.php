@@ -239,7 +239,7 @@ class WC_CSV_Product_Handler {
     private function import_variable_product($sku, $variable_data) {
         
         $existing_product_id = wc_get_product_id_by_sku($sku);
-        return array("good" => 3, "data" => $variable_data['variations']);
+        return array("good" => 3, "data" => $variable_data);
 
         if (!$existing_product_id) {            
             $product = new WC_Product_Variable();
