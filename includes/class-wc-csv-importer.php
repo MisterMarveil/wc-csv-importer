@@ -182,8 +182,6 @@ class WC_CSV_Importer {
             wp_die("oops! something went wrong: ".$e->getMessage());
         }
 
-        wp_send_json(array("success" => true, "result"=> $result));
-        wp_die();
         $rowCount = (int) get_option(PRODUCT_TOTAL_ROWS_COUNT, 0) - 1; 
         
 
