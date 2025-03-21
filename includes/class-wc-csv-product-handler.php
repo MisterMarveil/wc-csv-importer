@@ -254,19 +254,32 @@ class WC_CSV_Product_Handler {
             
             // Collect up to 2 gallery images from each variation
             $gallery_images = [];
+            $isbrandSetted = false;
+            $brand_ids = [];
+
             foreach ($variable_data['variations'] as $variation) {
                 if (!empty($variation['images_csv'])) {
                     $images = explode('|', $variation['images_csv']);
                     $gallery_images = array_merge($gallery_images, array_slice($images, 0, 2));
                 }
+
+                // Assign brand
+                if (!$isbrandSetted && !empty($variation['brand'])) {
+                    $isbrandSetted = true;
+                    $brand_ids = $this->create_and_assign_brand_with_hierarchy($variation['brand'], explode("|", $variation["brand_hierarchy"]));
+                }        
             }
 
             if (!empty($gallery_images)) {
                 $this->set_product_gallery($product, $gallery_images);
             }
-            
+
             $product->save();
             $existing_product_id = $product->get_id();
+
+            if(!empty($brand_ids)){
+                wp_set_object_terms( $product->get_id(), $brand_ids, 'product_brand' );   
+            }
         }else{
             $product = wc_get_product($existing_product_id);
         }
