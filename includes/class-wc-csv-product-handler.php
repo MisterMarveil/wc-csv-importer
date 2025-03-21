@@ -480,6 +480,8 @@ class WC_CSV_Product_Handler {
         if(isset(($product_data['html_description'])))
             $variation->set_description($product_data['html_description']);
 
+        return array("good" => 10, "data" => array("var" => $variation, "data" => $product_data));
+
         if(isset(($product_data['description'])))
             $variation->set_short_description($product_data['description']);
 
@@ -866,8 +868,8 @@ class WC_CSV_Product_Handler {
             
             $variation->set_attributes($variation_attributes);
             
-            //$this->enrich_variation($variation, $data);
-            return array("good" => 9, "data" => array("product_attr" => $attributes, "variation_attr" => $var_attributes));
+            return $this->enrich_variation($variation, $data);
+            
            
             $variations[] = $variation;
         }
