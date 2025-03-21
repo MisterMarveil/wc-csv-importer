@@ -854,7 +854,7 @@ class WC_CSV_Product_Handler {
             $variation_attributes = array();
             $attributes = $product->get_attributes();
             $var_attributes = $variation_data['attributes'];
-            return array("good" => 6, "data" => $variations_data);
+            return array("good" => 7, "data" => array("product_attr" => $attributes, "variation_attr" => $var_attributes));
             foreach ($attributes as $attribute) {
                 $attribute_key = sanitize_title($attribute->get_name());                
                 foreach($var_attributes as $v_attr_key => $v_attr_value){
