@@ -297,8 +297,7 @@ class WC_CSV_Product_Handler {
         $attributes_variations_data = $this->extract_attributes($product, $variable_data['variations']);
         //return array("att_var_data" => $attributes_variations_data);
 
-        $result = $this->product_save_attributes($existing_product_id, $attributes_variations_data['attributes']);
-        return array("data" => $result);
+        $this->product_save_attributes($existing_product_id, $attributes_variations_data['attributes']);
         return $this->product_save_variations($existing_product_id, $attributes_variations_data['variations']);
         //return $this->create_product_attributes_and_variations($existing_product_id, $attributes_variations_data['attributes'], $attributes_variations_data['variations']);
     }
@@ -829,6 +828,9 @@ class WC_CSV_Product_Handler {
         if (!$product || $product->get_type() !== 'variable') {
             wp_die('Invalid product or not a variable product: '.$product_id);
         }
+
+        return array("good" => 5, "data" => $variations_data);
+
         
         // Traitement des variations
         // Cette partie traiterait des tableaux comme variable_post_id, variable_sku, etc.
