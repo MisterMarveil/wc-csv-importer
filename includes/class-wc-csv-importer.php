@@ -1,5 +1,4 @@
- 
-<?php
+ <?php
 // Définition des classes
 class WC_CSV_Importer {
     public function __construct() {
