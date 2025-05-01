@@ -1,4 +1,3 @@
- 
 <?php
 
 class WC_CSV_Category_Handler {
