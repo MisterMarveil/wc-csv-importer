@@ -106,3 +106,4 @@ function wc_csv_cron_import() {
     echo 'Imported  '+($offset == 0  ? 'completed successfully' : $offset+' products') +' in '.($end->getTimestamp() - $start->getTimestamp()).'seconds';
     exit;
 }
+?>
