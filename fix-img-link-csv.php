@@ -10,7 +10,7 @@ function get_image_url_from_drive_links_csv($csvFilePath, $outputCsvPath, $wordp
     $outputHandle = fopen($outputCsvPath, "w");
 
     $header = fgetcsv($inputHandle);
-    $imageColIndex = array_search("images", $header);
+    $imageColIndex = array_search("Images", $header);
 
     if ($imageColIndex === false) {
         die("❌ Colonne 'images' non trouvée dans le fichier CSV.");
